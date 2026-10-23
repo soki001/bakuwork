@@ -1,0 +1,6 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+body { @apply bg-slate-950 text-slate-100 antialiased; }
+h1, h2, h3 { @apply font-display tracking-wide; }
+@media print { body { background: #fff; color: #0f172a; } }
