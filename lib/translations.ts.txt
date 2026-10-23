@@ -1,0 +1,30 @@
+export const translations = {
+  az: {
+    dashboard: "İdarə Paneli",
+    newDpr: "Yeni DPR",
+    punchList: "Qüsur Siyahısı (Punch List)",
+    export: "İxrac Et",
+    todayAcrossSites: "Bu gün sahələr üzrə",
+    activeSites: "Aktiv Sahələr",
+    workersOnSite: "Sahədəki İşçilər",
+    weather: "Hava Şəraiti",
+    dprAwaitingApproval: "Təsdiq Gözləyən DPR-lər",
+    safetyIncidents: "SƏTƏM Hadisələri",
+    projectProgress: "Layihe Tərəqqisi",
+    behindPlan: "plandan geridə",
+  },
+  en: {
+    dashboard: "Dashboard",
+    newDpr: "New DPR",
+    punchList: "Punch List",
+    export: "Export",
+    todayAcrossSites: "Today across your sites",
+    activeSites: "Active Sites",
+    workersOnSite: "Workers on site today",
+    weather: "Weather",
+    dprAwaitingApproval: "DPRs awaiting approval",
+    safetyIncidents: "Safety Incidents",
+    projectProgress: "Project Progress",
+    behindPlan: "behind plan",
+  }
+};
