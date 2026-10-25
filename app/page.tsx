@@ -8,12 +8,6 @@ import {
   FileText, 
   ShieldAlert, 
   Plus, 
-  LayoutDashboard,
-  FilePlus,
-  ClipboardCheck,
-  Download,
-  Settings as SettingsIcon,
-  HardHat,
   Save,
   Globe
 } from 'lucide-react';
@@ -23,17 +17,9 @@ function DashboardContent() {
   const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'settings'>('dashboard');
   
-  // Şirkət Məlumatları Dövriyyəsi (Dinamik State)
+  // Şirkət Məlumatları Dövriyyəsi
   const [companyName, setCompanyName] = useState('BuildSync MMC');
   const [saveAlert, setSaveAlert] = useState(false);
-
-  const menuItems = [
-    { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
-    { id: 'newDpr', icon: FilePlus, label: t.newDpr },
-    { id: 'punchList', icon: ClipboardCheck, label: t.punchList },
-    { id: 'export', icon: Download, label: t.export },
-    { id: 'settings', icon: SettingsIcon, label: t.settings },
-  ];
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,54 +28,13 @@ function DashboardContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden flex">
+    <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden p-6">
       
       {/* SABİT ARXA FON ŞƏKLİ */}
       <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* SOL MENYU (SIDEBAR) */}
-      <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20 shrink-0">
-        <div>
-          <div className="flex items-center gap-3 px-3 py-4 mb-6">
-            <HardHat className="w-8 h-8 text-amber-500" />
-            <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-wider text-white leading-none">
-                build<span className="text-amber-500">sync</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium truncate max-w-[130px] mt-1">
-                {companyName}
-              </span>
-            </div>
-          </div>
-
-          <nav className="space-y-1">
-            {menuItems.map((item) => {
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    if (item.id === 'dashboard' || item.id === 'settings') {
-                      setActiveTab(item.id as 'dashboard' | 'settings');
-                    }
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive 
-                      ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
-                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-                  }`}
-                >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      </aside>
-
-      {/* ƏSAS İÇƏRİK SAHƏSİ */}
-      <main className="flex-1 p-6 relative z-10 overflow-y-auto max-w-7xl mx-auto space-y-6">
+      {/* ƏSAS İÇƏRİK SAHƏSİ (İÇİNDƏ EXTRA SIDEBAR YOXDUR) */}
+      <main className="relative z-10 max-w-7xl mx-auto space-y-6">
         
         {/* TAB 1: DASHBOARD (ƏSAS PANEL) */}
         {activeTab === 'dashboard' && (
@@ -98,7 +43,7 @@ function DashboardContent() {
             <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
               <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none bg-[url('/kask11.webp')] bg-cover bg-center" />
 
-              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pr-12">
+              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
                 <div className="space-y-2">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
                     <Building2 className="w-3.5 h-3.5" />
@@ -216,96 +161,6 @@ function DashboardContent() {
               </div>
             </div>
           </>
-        )}
-
-        {/* TAB 2: AYARLAR (SETTINGS) SƏHİFƏSİ */}
-        {activeTab === 'settings' && (
-          <div className="space-y-6">
-            {/* Header */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md">
-              <h1 className="text-2xl font-bold text-white">{t.settingsTitle}</h1>
-              <p className="text-slate-400 text-sm mt-1">{t.settingsDesc}</p>
-            </div>
-
-            {saveAlert && (
-              <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl text-sm font-medium">
-                {t.saveSuccess}
-              </div>
-            )}
-
-            {/* Form */}
-            <form onSubmit={handleSaveSettings} className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-6">
-              
-              {/* Şirkət Adı */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200 block">
-                  {t.companyName}
-                </label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full max-w-md bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
-                  required
-                />
-              </div>
-
-              {/* Dil Seçimi */}
-              <div className="space-y-2 pt-2 border-t border-slate-800">
-                <label className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-amber-400" />
-                  {t.selectLanguage}
-                </label>
-                <div className="flex flex-wrap gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('az')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
-                      language === 'az'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    🇦🇿 Azərbaycan
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('en')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
-                      language === 'en'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    🇬🇧 English
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setLanguage('ru')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
-                      language === 'ru'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
-                    }`}
-                  >
-                    🇷🇺 Русский
-                  </button>
-                </div>
-              </div>
-
-              {/* Yadda saxla düyməsi */}
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-all shadow-lg shadow-amber-500/20"
-                >
-                  <Save className="w-4 h-4" />
-                  {t.saveChanges}
-                </button>
-              </div>
-
-            </form>
-          </div>
         )}
 
       </main>
