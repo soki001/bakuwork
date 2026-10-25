@@ -38,7 +38,7 @@ export default function Dashboard() {
         className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950/40 p-6 md:p-8 border border-slate-800 shadow-xl"
       >
         {/* Arxa plan inşaat silueti overlay */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-10 pointer-events-none bg-[url('https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?q=80&w=1000&auto=format&fit=crop')] bg-cover bg-center" />
+        <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-2 max-w-xl">
