@@ -15,7 +15,8 @@ import {
   Settings,
   HardHat,
   Save,
-  Globe
+  Globe,
+  Image as ImageIcon
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -23,8 +24,9 @@ function DashboardContent() {
   const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'settings'>('dashboard');
   
-  // Şirkət Məlumatları (State)
+  // Şirkət və Ayarlar State-ləri (Tamamilə ayrı)
   const [companyName, setCompanyName] = useState('BuildSync MMC');
+  const [companyLogo, setCompanyLogo] = useState('');
   const [saveAlert, setSaveAlert] = useState(false);
 
   const menuItems = [
@@ -224,9 +226,9 @@ function DashboardContent() {
           </>
         )}
 
-        {/* TAB 2: AYARLAR (SETTINGS) SƏHİFƏSİ */}
+        {/* TAB 2: AYARLAR (SETTINGS) SƏHİFƏSİ - MÜSTƏQİL BLOKLAR */}
         {activeTab === 'settings' && (
-          <div className="space-y-6">
+          <div className="space-y-6 max-w-4xl">
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md">
               <h1 className="text-2xl font-bold text-white">{t.settingsTitle}</h1>
               <p className="text-slate-400 text-sm mt-1">{t.settingsDesc}</p>
@@ -238,46 +240,69 @@ function DashboardContent() {
               </div>
             )}
 
-            <form onSubmit={handleSaveSettings} className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-6">
+            <form onSubmit={handleSaveSettings} className="space-y-6">
               
-              {/* Şirkət Adı */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-200 block">
-                  {t.companyName}
-                </label>
-                <input
-                  type="text"
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                  className="w-full max-w-md bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
-                  required
-                />
+              {/* BLOK 1: ŞİRKƏT PROFİLİ VƏ LOGO (Tamamilə Ayrı) */}
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
+                  <Building2 className="w-4 h-4" />
+                  Şirkət Məlumatları və Brendinq
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-300 block">
+                      {t.companyName}
+                    </label>
+                    <input
+                      type="text"
+                      value={companyName}
+                      onChange={(e) => setCompanyName(e.target.value)}
+                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-medium text-slate-300 block">
+                      Şirkət Loqosu (Şəkil Linki və ya Adı)
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Məs: /logo.png"
+                      value={companyLogo}
+                      onChange={(e) => setCompanyLogo(e.target.value)}
+                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Dil Seçimi */}
-              <div className="space-y-2 pt-4 border-t border-slate-800">
-                <label className="text-sm font-medium text-slate-200 flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-amber-400" />
-                  {t.selectLanguage}
-                </label>
+              {/* BLOK 2: SİSTEM DİLİ SEÇİMİ (Tamamilə Müstəqil) */}
+              <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
+                <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
+                  <Globe className="w-4 h-4" />
+                  İnterfeys Dili / System Language
+                </div>
+
                 <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
                     onClick={() => setLanguage('az')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                    className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border ${
                       language === 'az'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
                         : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
-                    🇦🇿 Azərbaycan
+                    🇦🇿 Azərbaycan dili
                   </button>
                   <button
                     type="button"
                     onClick={() => setLanguage('en')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                    className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border ${
                       language === 'en'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
                         : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
@@ -286,9 +311,9 @@ function DashboardContent() {
                   <button
                     type="button"
                     onClick={() => setLanguage('ru')}
-                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all border ${
+                    className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border ${
                       language === 'ru'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400'
+                        ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
                         : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
                     }`}
                   >
@@ -297,10 +322,11 @@ function DashboardContent() {
                 </div>
               </div>
 
-              <div className="pt-4">
+              {/* Yadda Saxla Düyməsi */}
+              <div>
                 <button
                   type="submit"
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-all shadow-lg shadow-amber-500/20"
+                  className="flex items-center gap-2 px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-all shadow-lg shadow-amber-500/20"
                 >
                   <Save className="w-4 h-4" />
                   {t.saveChanges}
