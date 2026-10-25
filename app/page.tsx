@@ -36,7 +36,45 @@ function DashboardContent() {
         <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
           <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none bg-[url('/kask11.webp')] bg-cover bg-center" />
           
-          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+          {/* SAĞ YUXARI KÜNCƏ YERLƏŞDİRİLMİŞ DİL SEÇİMİ */}
+          <div className="absolute top-4 right-4 z-20">
+            <div className="relative">
+              <button 
+                onClick={() => setIsLangOpen(!isLangOpen)}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-medium transition-all shadow-lg"
+              >
+                <Globe className="w-3.5 h-3.5 text-amber-400" />
+                <span>{langNames[language]}</span>
+                <ChevronDown className="w-3 h-3 text-slate-400" />
+              </button>
+
+              {/* DİL MENYUSU */}
+              {isLangOpen && (
+                <div className="absolute right-0 mt-2 w-36 bg-slate-900/95 border border-slate-700 rounded-xl shadow-2xl py-1.5 z-[999] backdrop-blur-xl flex flex-col space-y-1">
+                  <button
+                    onClick={() => { setLanguage('az'); setIsLangOpen(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 transition-colors ${language === 'az' ? 'text-amber-400 font-bold bg-slate-800/50' : 'text-slate-300'}`}
+                  >
+                    🇦🇿 Azərbaycan
+                  </button>
+                  <button
+                    onClick={() => { setLanguage('en'); setIsLangOpen(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 transition-colors ${language === 'en' ? 'text-amber-400 font-bold bg-slate-800/50' : 'text-slate-300'}`}
+                  >
+                    🇬🇧 English
+                  </button>
+                  <button
+                    onClick={() => { setLanguage('ru'); setIsLangOpen(false); }}
+                    className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-800 transition-colors ${language === 'ru' ? 'text-amber-400 font-bold bg-slate-800/50' : 'text-slate-300'}`}
+                  >
+                    🇷🇺 Русский
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 pr-12">
             <div className="space-y-2">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
                 <Building2 className="w-3.5 h-3.5" />
@@ -50,43 +88,7 @@ function DashboardContent() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* DİL SEÇİMİ DÜYMƏSİ */}
-              <div className="relative">
-                <button 
-                  onClick={() => setIsLangOpen(!isLangOpen)}
-                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-sm font-medium transition-all"
-                >
-                  <Globe className="w-4 h-4 text-amber-400" />
-                  <span>{langNames[language]}</span>
-                  <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
-                </button>
-
-                {/* DİL MENYUSU */}
-                {isLangOpen && (
-                  <div className="absolute right-0 mt-2 w-32 bg-slate-900 border border-slate-700 rounded-xl shadow-xl py-1 z-50 backdrop-blur-lg">
-                    <button
-                      onClick={() => { setLanguage('az'); setIsLangOpen(false); }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-800 transition-colors ${language === 'az' ? 'text-amber-400 font-bold' : 'text-slate-300'}`}
-                    >
-                      🇦🇿 Azərbaycan
-                    </button>
-                    <button
-                      onClick={() => { setLanguage('en'); setIsLangOpen(false); }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-800 transition-colors ${language === 'en' ? 'text-amber-400 font-bold' : 'text-slate-300'}`}
-                    >
-                      🇬🇧 English
-                    </button>
-                    <button
-                      onClick={() => { setLanguage('ru'); setIsLangOpen(false); }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-slate-800 transition-colors ${language === 'ru' ? 'text-amber-400 font-bold' : 'text-slate-300'}`}
-                    >
-                      🇷🇺 Русский
-                    </button>
-                  </div>
-                )}
-              </div>
-
+            <div>
               <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-all shadow-lg shadow-amber-500/20">
                 <Plus className="w-4 h-4" />
                 {t.newDpr}
