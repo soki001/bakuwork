@@ -28,7 +28,8 @@ import {
   Hash,
   Square,
   Play,
-  Image as ImageIcon
+  Video as VideoIcon,
+  StopCircle
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -72,7 +73,7 @@ function DashboardContent() {
   const [companyLogo, setCompanyLogo] = useState('');
   const [saveAlert, setSaveAlert] = useState(false);
 
-  // Cari İstifadəçi Məlumatı
+  // Cari İstifadəçi
   const currentUser = 'Şöhrət Məmmədov (Baş Mühəndis)';
 
   // Chat State-ləri
@@ -88,15 +89,21 @@ function DashboardContent() {
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
 
-  // Kamera və Media Çəkiliş Modal state-ləri
+  // Kamera / Video Modal state-ləri
   const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [mediaMode, setMediaMode] = useState<'photo' | 'video'>('photo');
   const videoRef = useRef<HTMLVideoElement>(null);
   const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const [isRecordingVideo, setIsRecordingVideo] = useState(false);
 
-  // Səs Yazma State-ləri
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordTime, setRecordTime] = useState(0);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  // Əsl Mikrofon (Səs Yazma) State-ləri
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const audioRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const [audioTimer, setAudioTimer] = useState(0);
+  const audioTimerInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Söhbət mesajları bazası
   const [messages, setMessages] = useState<Record<string, Message[]>>({
@@ -216,31 +223,90 @@ function DashboardContent() {
     setMessageInput('');
   };
 
-  // Kameranı AÇMAQ
-  const openCameraModal = async () => {
+  // GERÇƏK SƏS YAZMA (Audio Recording)
+  const startAudioRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioRecorderRef.current = recorder;
+      audioChunksRef.current = [];
+
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        const now = new Date();
+        const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+        const newMessage: Message = {
+          id: Date.now().toString(),
+          sender: currentUser,
+          role: 'Baş Mühəndis',
+          mediaUrl: audioUrl,
+          mediaType: 'audio',
+          time: timeString
+        };
+
+        setMessages(prev => ({
+          ...prev,
+          [activeChatId]: [...(prev[activeChatId] || []), newMessage]
+        }));
+
+        // Stream-i bağla
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      recorder.start();
+      setIsRecordingAudio(true);
+      setAudioTimer(0);
+      audioTimerInterval.current = setInterval(() => {
+        setAudioTimer(prev => prev + 1);
+      }, 1000);
+
+    } catch (err) {
+      alert('Mikrofona giriş icnası verilmədi.');
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (audioRecorderRef.current && isRecordingAudio) {
+      audioRecorderRef.current.stop();
+      setIsRecordingAudio(false);
+      if (audioTimerInterval.current) clearInterval(audioTimerInterval.current);
+    }
+  };
+
+  // KAMERA / VİDEO MODALINI AÇ
+  const openCameraModal = async (mode: 'photo' | 'video') => {
+    setMediaMode(mode);
     setIsCameraOpen(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      const constraints = mode === 'video' ? { video: true, audio: true } : { video: true, audio: false };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setMediaStream(stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
       }
     } catch (err) {
-      alert('Kameraya giriş icnası verilmədi və ya kamera tapılmadı.');
+      alert('Kamera və ya mikrofona giriş icazəsi alınmadı.');
       setIsCameraOpen(false);
     }
   };
 
-  // Kameranı BAĞLAMAQ
   const closeCameraModal = () => {
     if (mediaStream) {
       mediaStream.getTracks().forEach(track => track.stop());
       setMediaStream(null);
     }
     setIsCameraOpen(false);
+    setIsRecordingVideo(false);
   };
 
-  // Kameradan Şəkil Çəkib Çata Göndərmək
+  // Şəkil çək və göndər
   const capturePhotoAndSend = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
@@ -271,37 +337,49 @@ function DashboardContent() {
     closeCameraModal();
   };
 
-  // Səs Yazmağa Başlamaq
-  const startRecording = () => {
-    setIsRecording(true);
-    setRecordTime(0);
-    timerRef.current = setInterval(() => {
-      setRecordTime(prev => prev + 1);
-    }, 1000);
-  };
+  // Video çəkməyə başla
+  const startVideoRecording = () => {
+    if (!mediaStream) return;
+    recordedChunksRef.current = [];
+    const recorder = new MediaRecorder(mediaStream, { mimeType: 'video/webm' });
+    mediaRecorderRef.current = recorder;
 
-  // Səs Yazmağı Dayandırıb Göndərmək
-  const stopRecordingAndSend = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    setIsRecording(false);
-
-    const now = new Date();
-    const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      sender: currentUser,
-      role: 'Baş Mühəndis',
-      text: `🎤 Səsli mesaj (${recordTime} saniyə)`,
-      mediaType: 'audio',
-      time: timeString
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) recordedChunksRef.current.push(e.data);
     };
 
-    setMessages(prev => ({
-      ...prev,
-      [activeChatId]: [...(prev[activeChatId] || []), newMessage]
-    }));
-    setRecordTime(0);
+    recorder.onstop = () => {
+      const videoBlob = new Blob(recordedChunksRef.current, { type: 'video/webm' });
+      const videoUrl = URL.createObjectURL(videoBlob);
+
+      const now = new Date();
+      const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        sender: currentUser,
+        role: 'Baş Mühəndis',
+        mediaUrl: videoUrl,
+        mediaType: 'video',
+        time: timeString
+      };
+
+      setMessages(prev => ({
+        ...prev,
+        [activeChatId]: [...(prev[activeChatId] || []), newMessage]
+      }));
+    };
+
+    recorder.start();
+    setIsRecordingVideo(true);
+  };
+
+  // Video çəkməyi dayandır və göndər
+  const stopVideoRecordingAndSend = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+    }
+    closeCameraModal();
   };
 
   // Yeni Qrup Yaratma
@@ -460,7 +538,7 @@ function DashboardContent() {
           </>
         )}
 
-        {/* TAB 2: CHAT BÖLMƏSİ (KAMERA VƏ SƏS DƏSTƏKLİ) */}
+        {/* TAB 2: CHAT BÖLMƏSİ (ŞƏKİL, GERÇƏK SƏS VƏ VİDEO DƏSTƏKLİ) */}
         {activeTab === 'chat' && (
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl backdrop-blur-md h-[calc(100vh-80px)] flex overflow-hidden shadow-2xl">
             
@@ -502,7 +580,6 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* + QRUP YARAT DÜYMƏSİ */}
               <div className="p-4 border-t border-slate-800 bg-slate-900/40">
                 <button
                   onClick={() => setIsGroupModalOpen(true)}
@@ -545,7 +622,6 @@ function DashboardContent() {
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
                         
-                        {/* MÜƏLLİF ADI VƏ VƏZİFƏSİ */}
                         <div className="text-[11px] font-semibold text-amber-400/90 mb-1 px-1 flex items-center gap-1.5">
                           <span>{msg.sender}</span>
                           <span className="text-[10px] text-slate-500 font-normal">({msg.role})</span>
@@ -558,22 +634,25 @@ function DashboardContent() {
                         }`}>
                           {msg.text && <p className="leading-relaxed">{msg.text}</p>}
                           
-                          {/* Əgər şəkildirsə */}
+                          {/* ŞƏKİL */}
                           {msg.mediaType === 'image' && msg.mediaUrl && (
                             <div className="rounded-xl overflow-hidden border border-slate-700/50">
                               <img src={msg.mediaUrl} alt="Sahə şəkli" className="w-full max-h-60 object-cover" />
                             </div>
                           )}
 
-                          {/* Əgər səsli mesjadırsa */}
-                          {msg.mediaType === 'audio' && (
-                            <div className="flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl">
-                              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                                <Play className="w-4 h-4 fill-current" />
-                              </div>
-                              <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                                <div className="w-3/4 h-full bg-cyan-400" />
-                              </div>
+                          {/* VİDEO */}
+                          {msg.mediaType === 'video' && msg.mediaUrl && (
+                            <div className="rounded-xl overflow-hidden border border-slate-700/50">
+                              <video src={msg.mediaUrl} controls className="w-full max-h-60 object-cover" />
+                            </div>
+                          )}
+
+                          {/* SƏSLİ MESAJ (Gerçək Playable Audio) */}
+                          {msg.mediaType === 'audio' && msg.mediaUrl && (
+                            <div className="space-y-1">
+                              <div className="text-[10px] opacity-80 font-medium">🎤 Səsli mesaj</div>
+                              <audio src={msg.mediaUrl} controls className="w-full h-9" />
                             </div>
                           )}
 
@@ -587,32 +666,42 @@ function DashboardContent() {
                 )}
               </div>
 
-              {/* SƏS YAZMA REJİMİ GÖRÜNTÜSÜ VƏ YA NORMAL PANEL */}
-              {isRecording ? (
+              {/* SƏS YAZILIRKƏN GÖRÜNTÜ VƏ YA NORMAL PANEL */}
+              {isRecordingAudio ? (
                 <div className="p-4 border-t border-slate-800 bg-red-500/10 flex items-center justify-between">
                   <div className="flex items-center gap-3 text-red-400 text-sm font-semibold">
                     <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
-                    Səs yazılır... ({recordTime}s)
+                    Gerçək səs yazılır... ({audioTimer}s)
                   </div>
                   <button
-                    onClick={stopRecordingAndSend}
+                    onClick={stopAudioRecording}
                     className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400 text-white text-xs font-bold transition-all shadow-lg shadow-red-500/20"
                   >
                     <Send className="w-4 h-4" />
-                    Səsi Göndər
+                    Səsi Bitir və Göndər
                   </button>
                 </div>
               ) : (
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
                   
-                  {/* Kamera düyməsi - Həqiqi Kamera Açır */}
+                  {/* ŞƏKİL ÇƏK DÜYMƏSİ */}
                   <button
                     type="button"
-                    onClick={openCameraModal}
+                    onClick={() => openCameraModal('photo')}
                     className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
-                    title="Kameranı aç və şəkil çək"
+                    title="Şəkil çək"
                   >
                     <Camera className="w-5 h-5 text-amber-400" />
+                  </button>
+
+                  {/* VİDEO ÇƏK DÜYMƏSİ */}
+                  <button
+                    type="button"
+                    onClick={() => openCameraModal('video')}
+                    className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
+                    title="Video çək"
+                  >
+                    <VideoIcon className="w-5 h-5 text-red-400" />
                   </button>
 
                   <input
@@ -623,11 +712,11 @@ function DashboardContent() {
                     className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
                   />
 
-                  {/* Dinamik Düymə: Xana boşdursa Mikrofon (Səs yazmağı başladır), Doludursa Göndər */}
+                  {/* DİNAMİK DÜYMƏ: Boşdursa Mikrofon (Səs Yaz), Doludursa Göndər */}
                   {messageInput.trim() === '' ? (
                     <button
                       type="button"
-                      onClick={startRecording}
+                      onClick={startAudioRecording}
                       className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
                       title="Səsli mesaj yaz"
                     >
@@ -651,7 +740,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* TAB 3: DPR HESABATLARI */}
+        {/* TAB 3: DPR */}
         {activeTab === 'dpr' && (
           <div className="space-y-6">
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -826,14 +915,14 @@ function DashboardContent() {
 
       </main>
 
-      {/* KAMERA MODALI (Canlı Canavar Çəkiliş) */}
+      {/* KAMERA / VİDEO ÇƏKİLİŞ MODALI */}
       {isCameraOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl p-6 shadow-2xl relative space-y-4">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                <Camera className="w-5 h-5 text-amber-500" />
-                Sahədən Şəkil Çəkilişi
+                {mediaMode === 'photo' ? <Camera className="w-5 h-5 text-amber-500" /> : <VideoIcon className="w-5 h-5 text-red-500" />}
+                {mediaMode === 'photo' ? 'Sahədən Şəkil Çəkilişi' : 'Sahədən Video Çəkilişi'}
               </h3>
               <button onClick={closeCameraModal} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
@@ -841,7 +930,13 @@ function DashboardContent() {
             </div>
 
             <div className="relative rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center border border-slate-800">
-              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+              <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
+              {isRecordingVideo && (
+                <div className="absolute top-4 left-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full animate-pulse flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                  Video Yazılır...
+                </div>
+              )}
             </div>
 
             <div className="flex justify-end gap-3 pt-2">
@@ -852,14 +947,39 @@ function DashboardContent() {
               >
                 İmtina et
               </button>
-              <button
-                type="button"
-                onClick={capturePhotoAndSend}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20"
-              >
-                <Camera className="w-4 h-4" />
-                Şəkli Çək və Göndər
-              </button>
+
+              {mediaMode === 'photo' ? (
+                <button
+                  type="button"
+                  onClick={capturePhotoAndSend}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20"
+                >
+                  <Camera className="w-4 h-4" />
+                  Şəkli Çək və Göndər
+                </button>
+              ) : (
+                <>
+                  {!isRecordingVideo ? (
+                    <button
+                      type="button"
+                      onClick={startVideoRecording}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-red-500 hover:bg-red-400 text-white text-xs font-bold shadow-lg shadow-red-500/20"
+                    >
+                      <VideoIcon className="w-4 h-4" />
+                      Video Yazmağa Başla
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={stopVideoRecordingAndSend}
+                      className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold shadow-lg shadow-emerald-500/20"
+                    >
+                      <StopCircle className="w-4 h-4" />
+                      Videonu Bitir və Göndər
+                    </button>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
