@@ -26,10 +26,12 @@ import {
   Camera,
   UsersRound,
   Hash,
-  Square,
   Play,
   Video as VideoIcon,
-  StopCircle
+  StopCircle,
+  Menu,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -64,6 +66,9 @@ function DashboardContent() {
   const { language, setLanguage, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'dpr' | 'chat' | 'settings'>('dashboard');
   
+  // Sol Menyu Qatlanma (Collapse) State-i
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   // DPR Filter State
   const [dprFilter, setDprFilter] = useState<'daily' | 'weekly' | 'monthly'>('daily');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -199,7 +204,6 @@ function DashboardContent() {
     setNewWorkDone('');
   };
 
-  // Mətn Mesajı Göndərmə
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
@@ -223,7 +227,6 @@ function DashboardContent() {
     setMessageInput('');
   };
 
-  // GERÇƏK SƏS YAZMA (Audio Recording)
   const startAudioRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -256,7 +259,6 @@ function DashboardContent() {
           [activeChatId]: [...(prev[activeChatId] || []), newMessage]
         }));
 
-        // Stream-i bağla
         stream.getTracks().forEach(track => track.stop());
       };
 
@@ -280,7 +282,6 @@ function DashboardContent() {
     }
   };
 
-  // KAMERA / VİDEO MODALINI AÇ
   const openCameraModal = async (mode: 'photo' | 'video') => {
     setMediaMode(mode);
     setIsCameraOpen(true);
@@ -306,7 +307,6 @@ function DashboardContent() {
     setIsRecordingVideo(false);
   };
 
-  // Şəkil çək və göndər
   const capturePhotoAndSend = () => {
     if (!videoRef.current) return;
     const canvas = document.createElement('canvas');
@@ -337,7 +337,6 @@ function DashboardContent() {
     closeCameraModal();
   };
 
-  // Video çəkməyə başla
   const startVideoRecording = () => {
     if (!mediaStream) return;
     recordedChunksRef.current = [];
@@ -374,7 +373,6 @@ function DashboardContent() {
     setIsRecordingVideo(true);
   };
 
-  // Video çəkməyi dayandır və göndər
   const stopVideoRecordingAndSend = () => {
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
@@ -382,7 +380,6 @@ function DashboardContent() {
     closeCameraModal();
   };
 
-  // Yeni Qrup Yaratma
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGroupName.trim()) return;
@@ -412,19 +409,34 @@ function DashboardContent() {
       {/* SABİT ARXA FON ŞƏKLİ */}
       <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* SOL MENYU (SIDEBAR) */}
-      <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20 shrink-0">
+      {/* SOL MENYU (SIDEBAR) - QATLANIB AÇILAN (COLLAPSIBLE) */}
+      <aside className={`bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20 shrink-0 transition-all duration-300 ${
+        isSidebarOpen ? 'w-64' : 'w-20'
+      }`}>
         <div>
-          <div className="flex items-center gap-3 px-3 py-4 mb-6">
-            <HardHat className="w-8 h-8 text-amber-500" />
-            <div className="flex flex-col">
-              <span className="font-bold text-xl tracking-wider text-white leading-none">
-                build<span className="text-amber-500">sync</span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-medium truncate max-w-[130px] mt-1">
-                {companyName}
-              </span>
+          <div className="flex items-center justify-between px-2 py-4 mb-6">
+            <div className={`flex items-center gap-3 overflow-hidden ${!isSidebarOpen && 'justify-center w-full'}`}>
+              <HardHat className="w-8 h-8 text-amber-500 shrink-0" />
+              {isSidebarOpen && (
+                <div className="flex flex-col truncate">
+                  <span className="font-bold text-xl tracking-wider text-white leading-none">
+                    build<span className="text-amber-500">sync</span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-medium truncate max-w-[130px] mt-1">
+                    {companyName}
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Qatlama / Açma Düyməsi */}
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-colors shrink-0"
+              title={isSidebarOpen ? 'Menyunu bağla' : 'Menyunu aç'}
+            >
+              {isSidebarOpen ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+            </button>
           </div>
 
           <nav className="space-y-1.5">
@@ -440,23 +452,26 @@ function DashboardContent() {
                       alert(`${item.label} bölməsi tezliklə yüklənəcək!`);
                     }
                   }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  title={!isSidebarOpen ? item.label : undefined}
+                  className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive 
                       ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20 font-semibold' 
                       : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-                  }`}
+                  } ${!isSidebarOpen && 'justify-center'}`}
                 >
-                  <item.icon className="w-4 h-4" />
-                  {item.label}
+                  <item.icon className="w-4 h-4 shrink-0" />
+                  {isSidebarOpen && <span className="truncate">{item.label}</span>}
                 </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="px-3 py-2 text-xs text-slate-500 font-medium">
-          v1.0.0 SaaS Pro
-        </div>
+        {isSidebarOpen && (
+          <div className="px-3 py-2 text-xs text-slate-500 font-medium truncate">
+            v1.0.0 SaaS Pro
+          </div>
+        )}
       </aside>
 
       {/* ƏSAS İÇƏRİK SAHƏSİ */}
@@ -538,7 +553,7 @@ function DashboardContent() {
           </>
         )}
 
-        {/* TAB 2: CHAT BÖLMƏSİ (ŞƏKİL, GERÇƏK SƏS VƏ VİDEO DƏSTƏKLİ) */}
+        {/* TAB 2: CHAT BÖLMƏSİ */}
         {activeTab === 'chat' && (
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl backdrop-blur-md h-[calc(100vh-80px)] flex overflow-hidden shadow-2xl">
             
@@ -648,7 +663,7 @@ function DashboardContent() {
                             </div>
                           )}
 
-                          {/* SƏSLİ MESAJ (Gerçək Playable Audio) */}
+                          {/* SƏSLİ MESAJ */}
                           {msg.mediaType === 'audio' && msg.mediaUrl && (
                             <div className="space-y-1">
                               <div className="text-[10px] opacity-80 font-medium">🎤 Səsli mesaj</div>
@@ -684,7 +699,6 @@ function DashboardContent() {
               ) : (
                 <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
                   
-                  {/* ŞƏKİL ÇƏK DÜYMƏSİ */}
                   <button
                     type="button"
                     onClick={() => openCameraModal('photo')}
@@ -694,7 +708,6 @@ function DashboardContent() {
                     <Camera className="w-5 h-5 text-amber-400" />
                   </button>
 
-                  {/* VİDEO ÇƏK DÜYMƏSİ */}
                   <button
                     type="button"
                     onClick={() => openCameraModal('video')}
@@ -712,7 +725,6 @@ function DashboardContent() {
                     className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
                   />
 
-                  {/* DİNAMİK DÜYMƏ: Boşdursa Mikrofon (Səs Yaz), Doludursa Göndər */}
                   {messageInput.trim() === '' ? (
                     <button
                       type="button"
@@ -1150,7 +1162,7 @@ function DashboardContent() {
   );
 }
 
-export default function Page() {
+export default function Package() {
   return (
     <LanguageProvider>
       <DashboardContent />
