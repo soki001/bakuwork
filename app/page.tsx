@@ -9,7 +9,12 @@ import {
   ShieldAlert, 
   Plus, 
   Globe,
-  ChevronDown
+  ChevronDown,
+  LayoutDashboard,
+  FilePlus,
+  ClipboardCheck,
+  Download,
+  HardHat
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -23,21 +28,56 @@ function DashboardContent() {
     ru: 'RU'
   };
 
+  const menuItems = [
+    { icon: LayoutDashboard, label: t.dashboard, active: true },
+    { icon: FilePlus, label: t.newDpr, active: false },
+    { icon: ClipboardCheck, label: t.punchList, active: false },
+    { icon: Download, label: t.export, active: false },
+  ];
+
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden p-6">
+    <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden flex">
       
       {/* BÜTÜN EKRANI KAPLAYAN SABİT ARXA FON ŞƏKLİ */}
       <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* ƏSAS İÇƏRİK */}
-      <div className="relative z-10 max-w-7xl mx-auto space-y-6">
+      {/* SOL MENYU (SIDEBAR) - TAM TƏRCÜMƏ OLUNAN */}
+      <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20">
+        <div>
+          <div className="flex items-center gap-3 px-3 py-4 mb-6">
+            <HardHat className="w-8 h-8 text-amber-500" />
+            <span className="font-bold text-xl tracking-wider text-white">
+              build<span className="text-amber-500">sync</span>
+            </span>
+          </div>
+
+          <nav className="space-y-1">
+            {menuItems.map((item, idx) => (
+              <button
+                key={idx}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                  item.active 
+                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
+                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                }`}
+              >
+                <item.icon className="w-4 h-4" />
+                {item.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+      </aside>
+
+      {/* ƏSAS İÇƏRİK SAHƏSİ */}
+      <main className="flex-1 p-6 relative z-10 overflow-y-auto max-w-7xl mx-auto space-y-6">
         
         {/* Hero Banner */}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
           <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none bg-[url('/kask11.webp')] bg-cover bg-center" />
           
           {/* SAĞ YUXARI KÜNCƏ YERLƏŞDİRİLMİŞ DİL SEÇİMİ */}
-          <div className="absolute top-4 right-4 z-20">
+          <div className="absolute top-4 right-4 z-30">
             <div className="relative">
               <button 
                 onClick={() => setIsLangOpen(!isLangOpen)}
@@ -124,7 +164,9 @@ function DashboardContent() {
               <CloudSun className="w-5 h-5" />
             </div>
             <div>
-              <div className="text-2xl font-bold text-white">{t.weatherStatus}</div>
+              <div className="text-2xl font-bold text-white">
+                {language === 'az' ? t.weatherStatusAz : language === 'en' ? t.weatherStatusEn : t.weatherStatusRu}
+              </div>
               <div className="text-xs text-slate-400 font-medium">{t.weather}</div>
             </div>
           </div>
@@ -190,7 +232,7 @@ function DashboardContent() {
           </div>
         </div>
 
-      </div>
+      </main>
     </div>
   );
 }
