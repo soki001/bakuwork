@@ -18,7 +18,8 @@ import {
   Plus,
   Clock,
   Calendar,
-  X
+  X,
+  UserCheck
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -45,14 +46,15 @@ function DashboardContent() {
   const [companyLogo, setCompanyLogo] = useState('');
   const [saveAlert, setSaveAlert] = useState(false);
 
-  // Yeni DPR Form State-ləri
+  // Yeni DPR Form State-ləri (Məsul Şəxs əlavə olundu)
   const [newSiteName, setNewSiteName] = useState('Harbor Tower, Block A');
   const [newWorkerCount, setNewWorkerCount] = useState<number>(45);
   const [newWorkDone, setNewWorkDone] = useState('');
   const [newDateTime, setNewDateTime] = useState('2026-10-25T14:30');
+  const [newAuthor, setNewAuthor] = useState('Əli Məmmədov (Böyük Mühəndis)');
   const [newType, setNewType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
-  // Nümunə DPR Hesabatları Bazası (Local State)
+  // Nümunə DPR Hesabatları Bazası
   const [reports, setReports] = useState<DprReport[]>([
     {
       id: '1',
@@ -116,7 +118,7 @@ function DashboardContent() {
       workerCount: Number(newWorkerCount),
       workDone: newWorkDone,
       dateTime: formattedDate,
-      author: 'Sahə Mühəndisi'
+      author: newAuthor || 'Sahə Mühəndisi'
     };
     setReports([newReport, ...reports]);
     setIsModalOpen(false);
@@ -310,7 +312,7 @@ function DashboardContent() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                {/* 3 Filter Düyməsi: Günlük, Həftəlik, Aylıq */}
+                {/* 3 Filter Düyməsi */}
                 <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
                   <button
                     onClick={() => setDprFilter('daily')}
@@ -379,7 +381,7 @@ function DashboardContent() {
                         {report.siteName}
                       </h3>
                       <span className="text-xs text-slate-400 block mt-0.5">
-                        {t.workersOnSite}: <strong className="text-slate-200">{report.workerCount} nəfər</strong> • Məsul: {report.author}
+                        {t.workersOnSite}: <strong className="text-slate-200">{report.workerCount} nəfər</strong> • Məsul şəxs: <strong className="text-amber-400/90">{report.author}</strong>
                       </span>
                     </div>
 
@@ -507,7 +509,7 @@ function DashboardContent() {
 
       </main>
 
-      {/* MODAL: YENİ DPR HESABATI DAXİL ETİLMƏSİ (TAARİX VƏ SAAT SEÇİMİ İLƏ) */}
+      {/* MODAL: YENİ DPR HESABATI DAXİL ETİLMƏSİ */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative space-y-5 animate-in fade-in zoom-in duration-200">
@@ -572,19 +574,36 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* TARİX VƏ SAAT SEÇİMİ PANELİ */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                  {t.selectDateTime}
-                </label>
-                <input
-                  type="datetime-local"
-                  value={newDateTime}
-                  onChange={(e) => setNewDateTime(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
-                  required
-                />
+              {/* MƏSUL ŞƏXS VƏ TARİX/SAAT SEÇİMİ */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                    <UserCheck className="w-3.5 h-3.5 text-amber-400" />
+                    Məsul Şəxs (Ad, Soyad / Vəzifə)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Məs: Əli Məmmədov (Böyük Mühəndis)"
+                    value={newAuthor}
+                    onChange={(e) => setNewAuthor(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                    Tarix və Saat
+                  </label>
+                  <input
+                    type="datetime-local"
+                    value={newDateTime}
+                    onChange={(e) => setNewDateTime(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
               </div>
 
               {/* Görülən işlər */}
