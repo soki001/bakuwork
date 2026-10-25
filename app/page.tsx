@@ -41,8 +41,8 @@ function DashboardContent() {
       {/* BÜTÜN EKRANI KAPLAYAN SABİT ARXA FON ŞƏKLİ */}
       <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* SOL MENYU (SIDEBAR) */}
-      <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20">
+      {/* TƏK VƏ MÜKƏMMƏL SOL MENYU (SIDEBAR) */}
+      <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20 shrink-0">
         <div>
           <div className="flex items-center gap-3 px-3 py-4 mb-6">
             <HardHat className="w-8 h-8 text-amber-500" />
