@@ -19,7 +19,13 @@ import {
   Clock,
   Calendar,
   X,
-  UserCheck
+  UserCheck,
+  MessageSquare,
+  Send,
+  Mic,
+  Camera,
+  UsersRound,
+  Hash
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -33,9 +39,25 @@ interface DprReport {
   author: string;
 }
 
+interface Message {
+  id: string;
+  sender: string;
+  role: string;
+  text: string;
+  time: string;
+  type?: 'text' | 'image' | 'audio';
+}
+
+interface ChatGroup {
+  id: string;
+  name: string;
+  type: 'general' | 'group';
+  lastMessage: string;
+}
+
 function DashboardContent() {
   const { language, setLanguage, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'dpr' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'dpr' | 'chat' | 'settings'>('dashboard');
   
   // DPR Filter State
   const [dprFilter, setDprFilter] = useState<'daily' | 'weekly' | 'monthly'>('daily');
@@ -46,12 +68,42 @@ function DashboardContent() {
   const [companyLogo, setCompanyLogo] = useState('');
   const [saveAlert, setSaveAlert] = useState(false);
 
-  // Yeni DPR Form State-ləri (Məsul Şəxs əlavə olundu)
+  // Cari İstifadəçi Məlumatı (Mesajlarda görünəcək ad)
+  const currentUser = 'Şöhrət Məmmədov (Baş Mühəndis)';
+
+  // Chat State-ləri
+  const [groups, setGroups] = useState<ChatGroup[]>([
+    { id: 'gen', name: 'Ümumi Şirkət Çatı', type: 'general', lastMessage: 'Hər kəsə salam, işlər necə gedir?' },
+    { id: 'hvac', name: 'HVAC və Mexanika Qrupu', type: 'group', lastMessage: 'Blok A ventilyasiya boruları gətirildi.' },
+    { id: 'hse', name: 'SƏTƏM Təlimatları', type: 'group', lastMessage: 'Sabah səhər təhlükəsizlik yoxlaması olacaq.' }
+  ]);
+  const [activeChatId, setActiveChatId] = useState('gen');
+  const [messageInput, setMessageInput] = useState('');
+  
+  // Qrup yaratmaq üçün Modal state-i
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+
+  // Söhbət mesajları bazası
+  const [messages, setMessages] = useState<Record<string, Message[]>>({
+    gen: [
+      { id: '1', sender: 'Əli Məmmədov', role: 'Böyük Mühəndis', text: 'Sabahkİ beton tökmə işləri üçün hər şey hazırdır.', time: '14:10' },
+      { id: '2', sender: 'Rəşad Quliyev', role: 'Sahə Rəisi', text: 'Aydın oldu, işçilər saat 09:00-da sahədə olacaqlar.', time: '14:15' }
+    ],
+    hvac: [
+      { id: '1', sender: 'Kərim Əhmədov', role: 'MEP Koordinatoru', text: 'Kondisioner xətlərinin çəkilişi yoxlanıldı.', time: '11:30' }
+    ],
+    hse: [
+      { id: '1', sender: 'SƏTƏM Şöbəsi', role: 'Müfəttiş', text: 'Kaska və təhlükəsizlik kəmərlərindən istifadə etməyi unutmayın.', time: '09:00' }
+    ]
+  });
+
+  // Yeni DPR Form State-ləri
   const [newSiteName, setNewSiteName] = useState('Harbor Tower, Block A');
   const [newWorkerCount, setNewWorkerCount] = useState<number>(45);
   const [newWorkDone, setNewWorkDone] = useState('');
   const [newDateTime, setNewDateTime] = useState('2026-10-25T14:30');
-  const [newAuthor, setNewAuthor] = useState('Əli Məmmədov (Böyük Mühəndis)');
+  const [newAuthor, setNewAuthor] = useState('Şöhrət Məmmədov (Baş Mühəndis)');
   const [newType, setNewType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
 
   // Nümunə DPR Hesabatları Bazası
@@ -97,6 +149,7 @@ function DashboardContent() {
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
     { id: 'dpr', icon: FilePlus, label: t.dprReports },
+    { id: 'chat', icon: MessageSquare, label: 'Chat' },
     { id: 'punchList', icon: ClipboardCheck, label: t.punchList },
     { id: 'export', icon: Download, label: t.export },
     { id: 'settings', icon: Settings, label: t.settings },
@@ -125,7 +178,53 @@ function DashboardContent() {
     setNewWorkDone('');
   };
 
+  // Mesaj Göndərmə Funksiyası
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim()) return;
+
+    const now = new Date();
+    const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      sender: currentUser,
+      role: 'Baş Mühəndis',
+      text: messageInput,
+      time: timeString
+    };
+
+    setMessages(prev => ({
+      ...prev,
+      [activeChatId]: [...(prev[activeChatId] || []), newMessage]
+    }));
+
+    setMessageInput('');
+  };
+
+  // Yeni Qrup Yaratma Funksiyası
+  const handleCreateGroup = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newGroupName.trim()) return;
+
+    const newId = 'group_' + Date.now();
+    const newGroup: ChatGroup = {
+      id: newId,
+      name: newGroupName,
+      type: 'group',
+      lastMessage: 'Qrup yaradıldı.'
+    };
+
+    setGroups([...groups, newGroup]);
+    setMessages(prev => ({ ...prev, [newId]: [] }));
+    setActiveChatId(newId);
+    setNewGroupName('');
+    setIsGroupModalOpen(false);
+  };
+
   const filteredReports = reports.filter(r => r.type === dprFilter);
+  const currentChatMessages = messages[activeChatId] || [];
+  const activeGroupObj = groups.find(g => g.id === activeChatId);
 
   return (
     <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden flex">
@@ -155,8 +254,8 @@ function DashboardContent() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    if (item.id === 'dashboard' || item.id === 'dpr' || item.id === 'settings') {
-                      setActiveTab(item.id as 'dashboard' | 'dpr' | 'settings');
+                    if (['dashboard', 'dpr', 'chat', 'settings'].includes(item.id)) {
+                      setActiveTab(item.id as any);
                     } else {
                       alert(`${item.label} bölməsi tezliklə yüklənəcək!`);
                     }
@@ -300,11 +399,166 @@ function DashboardContent() {
           </>
         )}
 
-        {/* TAB 2: DPR HESABATLARI SƏHİFƏSİ */}
+        {/* TAB 2: CHAT BÖLMƏSİ (CANLI SÖHBƏT VƏ QRUPLAR) */}
+        {activeTab === 'chat' && (
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl backdrop-blur-md h-[calc(100vh-80px)] flex overflow-hidden shadow-2xl">
+            
+            {/* SOL TƏRƏFDƏKİ SÖHBƏT VƏ QRUPLAR SİYAHISI */}
+            <div className="w-80 border-r border-slate-800 bg-slate-950/40 flex flex-col justify-between shrink-0">
+              <div>
+                <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                  <h2 className="font-bold text-white text-sm flex items-center gap-2">
+                    <MessageSquare className="w-4 h-4 text-amber-500" />
+                    İşçi və Qrup Söhbətləri
+                  </h2>
+                </div>
+
+                <div className="p-3 space-y-1.5 overflow-y-auto max-h-[calc(100vh-220px)]">
+                  {groups.map((group) => {
+                    const isSelected = activeChatId === group.id;
+                    return (
+                      <button
+                        key={group.id}
+                        onClick={() => setActiveChatId(group.id)}
+                        className={`w-full text-left px-3.5 py-3 rounded-xl transition-all flex items-start gap-3 ${
+                          isSelected 
+                            ? 'bg-amber-500/10 border border-amber-500/20 text-white font-semibold' 
+                            : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 border border-transparent'
+                        }`}
+                      >
+                        <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                          group.type === 'general' ? 'bg-amber-500/20 text-amber-400' : 'bg-blue-500/20 text-blue-400'
+                        }`}>
+                          {group.type === 'general' ? <Hash className="w-4 h-4" /> : <UsersRound className="w-4 h-4" />}
+                        </div>
+                        <div className="overflow-hidden">
+                          <div className="text-sm truncate text-slate-200">{group.name}</div>
+                          <div className="text-[11px] text-slate-500 truncate mt-0.5">{group.lastMessage}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* + QRUP YARAT DÜYMƏSİ */}
+              <div className="p-4 border-t border-slate-800 bg-slate-900/40">
+                <button
+                  onClick={() => setIsGroupModalOpen(true)}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-lg shadow-amber-500/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  + Qrup Yarat
+                </button>
+              </div>
+            </div>
+
+            {/* SAĞ TƏRƏF: AKTİV MESAJLAŞMA PƏNCƏRƏSİ */}
+            <div className="flex-1 flex flex-col justify-between bg-slate-900/20">
+              
+              {/* Çat Başlığı */}
+              <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/30 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                    {activeGroupObj?.type === 'general' ? <Hash className="w-4 h-4" /> : <UsersRound className="w-4 h-4" />}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-white text-sm">{activeGroupObj?.name}</h3>
+                    <span className="text-[11px] text-emerald-400 flex items-center gap-1">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Aktiv kanal
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mesajların Axını */}
+              <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                {currentChatMessages.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-slate-500 text-xs space-y-1">
+                    <MessageSquare className="w-8 h-8 opacity-40 mb-1" />
+                    <span>Bu kanalda hələ mesaj yoxdur. İlk mesajı siz yazın!</span>
+                  </div>
+                ) : (
+                  currentChatMessages.map((msg) => {
+                    const isMyMessage = msg.sender === currentUser;
+                    return (
+                      <div key={msg.id} className={`flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
+                        
+                        {/* MÜƏLLİF ADI VƏ VƏZİFƏSİ (İşçinin qeydiyyatdakı adı) */}
+                        <div className="text-[11px] font-semibold text-amber-400/90 mb-1 px-1 flex items-center gap-1.5">
+                          <span>{msg.sender}</span>
+                          <span className="text-[10px] text-slate-500 font-normal">({msg.role})</span>
+                        </div>
+
+                        <div className={`max-w-md rounded-2xl px-4 py-3 text-sm space-y-1 shadow-md ${
+                          isMyMessage 
+                            ? 'bg-amber-500 text-slate-950 rounded-tr-none font-medium' 
+                            : 'bg-slate-800/80 border border-slate-700/60 text-slate-200 rounded-tl-none'
+                        }`}>
+                          <p className="leading-relaxed">{msg.text}</p>
+                          <div className={`text-[10px] text-right ${isMyMessage ? 'text-slate-800' : 'text-slate-400'}`}>
+                            {msg.time}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* AŞAĞIDAKI MESAJ GÖNDƏRMƏ PANELİ */}
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
+                
+                {/* Kamera Düyməsi (Şəkil və ya Video çəkib göndərmək üçün) */}
+                <button
+                  type="button"
+                  onClick={() => alert('Kamera açıldı: Sahədən şəkil və ya video çəkilişi simulyasiyası.')}
+                  className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
+                  title="Şəkil / Video çək"
+                >
+                  <Camera className="w-5 h-5 text-amber-400" />
+                </button>
+
+                {/* Mətn daxiletmə sahəsi */}
+                <input
+                  type="text"
+                  value={messageInput}
+                  onChange={(e) => setMessageInput(e.target.value)}
+                  placeholder="Mesajınızı yazın..."
+                  className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                />
+
+                {/* Dinamik Düymə: Xana boşdursa Mikrofon (Səsli mesaj), Doludursa Göndər */}
+                {messageInput.trim() === '' ? (
+                  <button
+                    type="button"
+                    onClick={() => alert('Səsli mesaj yazılır... (Simulyasiya)')}
+                    className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
+                    title="Səsli mesaj göndər"
+                  >
+                    <Mic className="w-5 h-5 text-cyan-400" />
+                  </button>
+                ) : (
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow-lg shadow-amber-500/20 shrink-0"
+                  >
+                    <Send className="w-4 h-4" />
+                    Göndər
+                  </button>
+                )}
+
+              </form>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 3: DPR HESABATLARI SƏHİFƏSİ */}
         {activeTab === 'dpr' && (
           <div className="space-y-6">
-            
-            {/* ÜST PANEL: BAŞLIQ, FILTERLƏR VƏ ƏLAVƏ ET DÜYMƏSİ */}
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-2xl font-bold text-white">{t.dprTitle}</h1>
@@ -312,7 +566,6 @@ function DashboardContent() {
               </div>
 
               <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                {/* 3 Filter Düyməsi */}
                 <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
                   <button
                     onClick={() => setDprFilter('daily')}
@@ -346,7 +599,6 @@ function DashboardContent() {
                   </button>
                 </div>
 
-                {/* Yeni DPR Yarat Düyməsi */}
                 <button
                   onClick={() => setIsModalOpen(true)}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-lg shadow-amber-500/20"
@@ -357,11 +609,10 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* HESABATLAR SİYAHISI */}
             <div className="space-y-4">
               {filteredReports.length === 0 ? (
                 <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-400 text-sm">
-                  Bu kateqoriyada hələ heç bir hesabat yoxdur. "+ Yeni DPR Hesabatı" düyməsinə basaraq ilk hesabatı əlavə edin.
+                  Bu kateqoriyada hələ heç bir hesabat yoxdur.
                 </div>
               ) : (
                 filteredReports.map((report) => (
@@ -369,7 +620,6 @@ function DashboardContent() {
                     key={report.id}
                     className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md relative space-y-3 hover:border-slate-700 transition-all"
                   >
-                    {/* SAĞ YUXARI KÜNC: SAAT VƏ TARİX */}
                     <div className="absolute top-6 right-6 flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
                       <Clock className="w-3.5 h-3.5" />
                       <span>{report.dateTime}</span>
@@ -396,7 +646,7 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* TAB 3: AYARLAR (SETTINGS) SƏHİFƏSİ */}
+        {/* TAB 4: AYARLAR (SETTINGS) SƏHİFƏSİ */}
         {activeTab === 'settings' && (
           <div className="space-y-6 max-w-4xl">
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md">
@@ -411,8 +661,6 @@ function DashboardContent() {
             )}
 
             <form onSubmit={handleSaveSettings} className="space-y-6">
-              
-              {/* BLOK 1: ŞİRKƏT PROFİLİ VƏ LOGO */}
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
                   <Building2 className="w-4 h-4" />
@@ -448,7 +696,6 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* BLOK 2: SİSTEM DİLİ SEÇİMİ */}
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
                   <Globe className="w-4 h-4" />
@@ -492,7 +739,6 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Yadda Saxla Düyməsi */}
               <div>
                 <button
                   type="submit"
@@ -528,8 +774,6 @@ function DashboardContent() {
             </div>
 
             <form onSubmit={handleCreateReport} className="space-y-4">
-              
-              {/* Hesabat Tipi */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-300 block">
                   Hesabat Tipi
@@ -545,7 +789,6 @@ function DashboardContent() {
                 </select>
               </div>
 
-              {/* Obyekt Adı Və İşçi Sayı */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-slate-300 block">
@@ -574,16 +817,14 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* MƏSUL ŞƏXS VƏ TARİX/SAAT SEÇİMİ */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-amber-400" />
-                    Məsul Şəxs (Ad, Soyad / Vəzifə)
+                    Məsul Şəxs
                   </label>
                   <input
                     type="text"
-                    placeholder="Məs: Əli Məmmədov (Böyük Mühəndis)"
                     value={newAuthor}
                     onChange={(e) => setNewAuthor(e.target.value)}
                     className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
@@ -606,7 +847,6 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* Görülən işlər */}
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-slate-300 block">
                   {t.workDone}
@@ -615,7 +855,7 @@ function DashboardContent() {
                   rows={4}
                   value={newWorkDone}
                   onChange={(e) => setNewWorkDone(e.target.value)}
-                  placeholder="Sahədə bu gün hansı işlər görülüb, hansı materiallar istifadə olunub..."
+                  placeholder="Görülən işlərin təsviri..."
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
                   required
                 />
@@ -637,6 +877,58 @@ function DashboardContent() {
                 </button>
               </div>
 
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: YENİ QRUP YARATMAK (CHAT) */}
+      {isGroupModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative space-y-5">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <UsersRound className="w-5 h-5 text-amber-500" />
+                Yeni Qrup və ya Kanal Yarat
+              </h3>
+              <button 
+                onClick={() => setIsGroupModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateGroup} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300 block">
+                  Qrupun Adı / Mövzusu
+                </label>
+                <input
+                  type="text"
+                  placeholder="Məs: Blok B Ustalar, Yanğından Mühafizə və s."
+                  value={newGroupName}
+                  onChange={(e) => setNewGroupName(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsGroupModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                >
+                  Vazkeç
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-amber-500/20"
+                >
+                  Qrup Yarat
+                </button>
+              </div>
             </form>
           </div>
         </div>
