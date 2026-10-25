@@ -9,12 +9,7 @@ import {
   ShieldAlert, 
   Plus, 
   Globe,
-  ChevronDown,
-  LayoutDashboard,
-  FilePlus,
-  ClipboardCheck,
-  Download,
-  HardHat
+  ChevronDown
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -28,49 +23,14 @@ function DashboardContent() {
     ru: 'RU'
   };
 
-  const menuItems = [
-    { icon: LayoutDashboard, label: t.dashboard, active: true },
-    { icon: FilePlus, label: t.newDpr, active: false },
-    { icon: ClipboardCheck, label: t.punchList, active: false },
-    { icon: Download, label: t.export, active: false },
-  ];
-
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden flex">
+    <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden p-6">
       
       {/* BÜTÜN EKRANI KAPLAYAN SABİT ARXA FON ŞƏKLİ */}
       <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* TƏK VƏ MÜKƏMMƏL SOL MENYU (SIDEBAR) */}
-      <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20 shrink-0">
-        <div>
-          <div className="flex items-center gap-3 px-3 py-4 mb-6">
-            <HardHat className="w-8 h-8 text-amber-500" />
-            <span className="font-bold text-xl tracking-wider text-white">
-              build<span className="text-amber-500">sync</span>
-            </span>
-          </div>
-
-          <nav className="space-y-1">
-            {menuItems.map((item, idx) => (
-              <button
-                key={idx}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                  item.active 
-                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' 
-                    : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
-                }`}
-              >
-                <item.icon className="w-4 h-4" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-        </div>
-      </aside>
-
-      {/* ƏSAS İÇƏRİK SAHƏSİ */}
-      <main className="flex-1 p-6 relative z-10 overflow-y-auto max-w-7xl mx-auto space-y-6">
+      {/* ƏSAS İÇƏRİK SAHƏSİ (TAM ORTADA VƏ GENİŞ) */}
+      <div className="relative z-10 max-w-7xl mx-auto space-y-6">
         
         {/* Hero Banner */}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
@@ -232,7 +192,7 @@ function DashboardContent() {
           </div>
         </div>
 
-      </main>
+      </div>
     </div>
   );
 }
