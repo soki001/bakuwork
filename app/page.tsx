@@ -216,7 +216,7 @@ function DashboardContent() {
                 <span className="text-amber-400 text-xs">45% · {t.behindSchedule}</span>
               </div>
               <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
-                <div className="bg-amber-500 h-full rounded-full" style="width: 45%" />
+                <div className="bg-amber-500 h-full rounded-full" style={{ width: '45%' }} />
               </div>
             </div>
 
