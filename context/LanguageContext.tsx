@@ -6,18 +6,13 @@ type Language = 'az' | 'en' | 'ru';
 
 type Translations = {
   [key in Language]: {
-    // Sol Menyu (Sidebar)
     dashboard: string;
     newDpr: string;
     punchList: string;
     export: string;
-    
-    // Hero Banner
     systemTag: string;
     heroTitle: string;
     heroDesc: string;
-
-    // KPI Kartları
     activeSites: string;
     workersOnSite: string;
     weather: string;
@@ -26,8 +21,6 @@ type Translations = {
     weatherStatusRu: string;
     pendingDprs: string;
     hseIncidents: string;
-
-    // Layihə Tərəqqisi
     projectProgress: string;
     totalActiveProjects: string;
     behindSchedule: string;
