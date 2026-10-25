@@ -32,10 +32,10 @@ export default function Dashboard() {
                 Tikinti İdarəetmə Sistemi
               </div>
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
-                Sahələrinizdə son vəziyyət və gündəlik hesabatlar
+                Sahədə son vəziyyət və gündəlik hesabatlar
               </h1>
               <p className="text-slate-300 text-sm max-w-xl">
-                Bütün aktiv obyekt, işçi sayını və təhlükəsizlik statusunu real vaxt rejimində izləyin.
+                 Aktiv obyekt, işçi sayını və təhlükəsizlik statusunu real vaxt rejimində izləyin.
               </p>
             </div>
 
