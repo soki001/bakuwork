@@ -15,14 +15,14 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden p-6">
       
-      {/* BÜTÜN EKRAN ARXA FON ŞƏKLİ */}
-      <div className="absolute inset-0 opacity-15 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
+      {/* TÜM EKRANI KAPLAYAN SABİT ARKA PLAN RESMİ */}
+      <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* ƏSAS İÇƏRİK */}
+      {/* ANA İÇERİK */}
       <div className="relative z-10 max-w-7xl mx-auto space-y-6">
         
         {/* Hero Banner */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-slate-900/90 via-slate-800/80 to-slate-900/90 border border-slate-800 p-8 shadow-2xl backdrop-blur-md">
+        <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
           <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center" />
           
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -34,7 +34,7 @@ export default function Dashboard() {
               <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
                 Sahələrinizdə son vəziyyət və gündəlik hesabatlar
               </h1>
-              <p className="text-slate-400 text-sm max-w-xl">
+              <p className="text-slate-300 text-sm max-w-xl">
                 Bütün aktiv obyekt, işçi sayını və təhlükəsizlik statusunu real vaxt rejimində izləyin.
               </p>
             </div>
@@ -54,7 +54,7 @@ export default function Dashboard() {
 
         {/* KPI Kartları */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur-md space-y-3">
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md space-y-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
               <Building2 className="w-5 h-5" />
             </div>
@@ -64,7 +64,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur-md space-y-3">
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md space-y-3">
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400">
               <Users className="w-5 h-5" />
             </div>
@@ -74,7 +74,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur-md space-y-3">
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md space-y-3">
             <div className="w-10 h-10 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-400">
               <CloudSun className="w-5 h-5" />
             </div>
@@ -84,7 +84,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur-md space-y-3">
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md space-y-3">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
               <FileText className="w-5 h-5" />
             </div>
@@ -94,7 +94,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 backdrop-blur-md space-y-3">
+          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md space-y-3">
             <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400">
               <ShieldAlert className="w-5 h-5" />
             </div>
@@ -106,7 +106,7 @@ export default function Dashboard() {
         </div>
 
         {/* Layihə Tərəqqisi */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 backdrop-blur-md space-y-6">
+        <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-6">
           <div className="flex justify-between items-center">
             <h2 className="text-lg font-bold text-white">Layihə Tərəqqisi</h2>
             <span className="text-xs text-slate-400 font-medium">Ümumi 3 Aktiv Obyekt</span>
@@ -118,7 +118,7 @@ export default function Dashboard() {
                 <span className="text-slate-200 font-medium">Harbor Tower, Block A</span>
                 <span className="text-slate-400">72%</span>
               </div>
-              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-emerald-500 h-full rounded-full" style={{ width: '72%' }} />
               </div>
             </div>
@@ -128,7 +128,7 @@ export default function Dashboard() {
                 <span className="text-slate-200 font-medium">Metro Logistics Hub</span>
                 <span className="text-amber-400 text-xs">45% · plandan geridə</span>
               </div>
-              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-amber-500 h-full rounded-full" style={{ width: '45%' }} />
               </div>
             </div>
@@ -138,7 +138,7 @@ export default function Dashboard() {
                 <span className="text-slate-200 font-medium">Riverside Medical Centre</span>
                 <span className="text-slate-400">88%</span>
               </div>
-              <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden">
+              <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
                 <div className="bg-emerald-500 h-full rounded-full" style={{ width: '88%' }} />
               </div>
             </div>
