@@ -6,7 +6,7 @@ type Language = 'az' | 'en' | 'ru';
 
 type Translations = {
   [key in Language]: {
-    // Header & Navigation
+    // Sol Menyu (Sidebar)
     dashboard: string;
     newDpr: string;
     punchList: string;
@@ -17,15 +17,17 @@ type Translations = {
     heroTitle: string;
     heroDesc: string;
 
-    // KPI Cards
+    // KPI Kartları
     activeSites: string;
     workersOnSite: string;
     weather: string;
-    weatherStatus: string;
+    weatherStatusAz: string;
+    weatherStatusEn: string;
+    weatherStatusRu: string;
     pendingDprs: string;
     hseIncidents: string;
 
-    // Project Progress
+    // Layihə Tərəqqisi
     projectProgress: string;
     totalActiveProjects: string;
     behindSchedule: string;
@@ -44,7 +46,9 @@ export const translations: Translations = {
     activeSites: "Aktiv Sahələr",
     workersOnSite: "Sahədəki İşçilər",
     weather: "Hava Şəraiti",
-    weatherStatus: "31°C, açıq",
+    weatherStatusAz: "31°C, açıq",
+    weatherStatusEn: "31°C, Clear",
+    weatherStatusRu: "31°C, Ясно",
     pendingDprs: "Təsdiq Gözləyən DPR-lər",
     hseIncidents: "SƏTƏM Hadisələri",
     projectProgress: "Layihə Tərəqqisi",
@@ -62,7 +66,9 @@ export const translations: Translations = {
     activeSites: "Active Sites",
     workersOnSite: "Workers on Site",
     weather: "Weather",
-    weatherStatus: "31°C, Clear",
+    weatherStatusAz: "31°C, açıq",
+    weatherStatusEn: "31°C, Clear",
+    weatherStatusRu: "31°C, Ясно",
     pendingDprs: "Pending DPRs",
     hseIncidents: "HSE Incidents",
     projectProgress: "Project Progress",
@@ -80,7 +86,9 @@ export const translations: Translations = {
     activeSites: "Активные объекты",
     workersOnSite: "Рабочие на объекте",
     weather: "Погода",
-    weatherStatus: "31°C, Ясно",
+    weatherStatusAz: "31°C, açıq",
+    weatherStatusEn: "31°C, Clear",
+    weatherStatusRu: "31°C, Ясно",
     pendingDprs: "DPR на утверждении",
     hseIncidents: "Инциденты ОТ и ТБ",
     projectProgress: "Прогресс проектов",
