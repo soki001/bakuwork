@@ -6,19 +6,14 @@ type Language = 'az' | 'en' | 'ru';
 
 type Translations = {
   [key in Language]: {
-    // Sol Menyu
     dashboard: string;
     dprReports: string;
     punchList: string;
     export: string;
     settings: string;
-    
-    // Hero Banner
     systemTag: string;
     heroTitle: string;
     heroDesc: string;
-
-    // KPI Kartları
     activeSites: string;
     workersOnSite: string;
     weather: string;
@@ -27,13 +22,9 @@ type Translations = {
     weatherStatusRu: string;
     pendingDprs: string;
     hseIncidents: string;
-
-    // Layihə Tərəqqisi
     projectProgress: string;
     totalActiveProjects: string;
     behindSchedule: string;
-
-    // Ayarlar Səhifəsi
     settingsTitle: string;
     settingsDesc: string;
     companyInfo: string;
@@ -41,8 +32,6 @@ type Translations = {
     selectLanguage: string;
     saveChanges: string;
     saveSuccess: string;
-
-    // DPR Hesabatları
     dprTitle: string;
     dprDesc: string;
     daily: string;
