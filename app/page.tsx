@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
   Building2, 
   Users, 
@@ -25,7 +25,10 @@ import {
   Mic,
   Camera,
   UsersRound,
-  Hash
+  Hash,
+  Square,
+  Play,
+  Image as ImageIcon
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
@@ -43,9 +46,10 @@ interface Message {
   id: string;
   sender: string;
   role: string;
-  text: string;
+  text?: string;
+  mediaUrl?: string;
+  mediaType?: 'image' | 'video' | 'audio';
   time: string;
-  type?: 'text' | 'image' | 'audio';
 }
 
 interface ChatGroup {
@@ -68,7 +72,7 @@ function DashboardContent() {
   const [companyLogo, setCompanyLogo] = useState('');
   const [saveAlert, setSaveAlert] = useState(false);
 
-  // Cari İstifadəçi Məlumatı (Mesajlarda görünəcək ad)
+  // Cari İstifadəçi Məlumatı
   const currentUser = 'Şöhrət Məmmədov (Baş Mühəndis)';
 
   // Chat State-ləri
@@ -83,6 +87,16 @@ function DashboardContent() {
   // Qrup yaratmaq üçün Modal state-i
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+
+  // Kamera və Media Çəkiliş Modal state-ləri
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+
+  // Səs Yazma State-ləri
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordTime, setRecordTime] = useState(0);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Söhbət mesajları bazası
   const [messages, setMessages] = useState<Record<string, Message[]>>({
@@ -178,7 +192,7 @@ function DashboardContent() {
     setNewWorkDone('');
   };
 
-  // Mesaj Göndərmə Funksiyası
+  // Mətn Mesajı Göndərmə
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageInput.trim()) return;
@@ -202,7 +216,95 @@ function DashboardContent() {
     setMessageInput('');
   };
 
-  // Yeni Qrup Yaratma Funksiyası
+  // Kameranı AÇMAQ
+  const openCameraModal = async () => {
+    setIsCameraOpen(true);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      setMediaStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      alert('Kameraya giriş icnası verilmədi və ya kamera tapılmadı.');
+      setIsCameraOpen(false);
+    }
+  };
+
+  // Kameranı BAĞLAMAQ
+  const closeCameraModal = () => {
+    if (mediaStream) {
+      mediaStream.getTracks().forEach(track => track.stop());
+      setMediaStream(null);
+    }
+    setIsCameraOpen(false);
+  };
+
+  // Kameradan Şəkil Çəkib Çata Göndərmək
+  const capturePhotoAndSend = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth || 640;
+    canvas.height = videoRef.current.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      const imageUrl = canvas.toDataURL('image/png');
+
+      const now = new Date();
+      const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        sender: currentUser,
+        role: 'Baş Mühəndis',
+        mediaUrl: imageUrl,
+        mediaType: 'image',
+        time: timeString
+      };
+
+      setMessages(prev => ({
+        ...prev,
+        [activeChatId]: [...(prev[activeChatId] || []), newMessage]
+      }));
+    }
+    closeCameraModal();
+  };
+
+  // Səs Yazmağa Başlamaq
+  const startRecording = () => {
+    setIsRecording(true);
+    setRecordTime(0);
+    timerRef.current = setInterval(() => {
+      setRecordTime(prev => prev + 1);
+    }, 1000);
+  };
+
+  // Səs Yazmağı Dayandırıb Göndərmək
+  const stopRecordingAndSend = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+    setIsRecording(false);
+
+    const now = new Date();
+    const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      sender: currentUser,
+      role: 'Baş Mühəndis',
+      text: `🎤 Səsli mesaj (${recordTime} saniyə)`,
+      mediaType: 'audio',
+      time: timeString
+    };
+
+    setMessages(prev => ({
+      ...prev,
+      [activeChatId]: [...(prev[activeChatId] || []), newMessage]
+    }));
+    setRecordTime(0);
+  };
+
+  // Yeni Qrup Yaratma
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newGroupName.trim()) return;
@@ -282,7 +384,7 @@ function DashboardContent() {
       {/* ƏSAS İÇƏRİK SAHƏSİ */}
       <main className="flex-1 p-6 relative z-10 overflow-y-auto max-w-7xl mx-auto space-y-6">
         
-        {/* TAB 1: DASHBOARD (ƏSAS PANEL) */}
+        {/* TAB 1: DASHBOARD */}
         {activeTab === 'dashboard' && (
           <>
             <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
@@ -302,7 +404,6 @@ function DashboardContent() {
               </div>
             </div>
 
-            {/* KPI Kartları */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-5 backdrop-blur-md space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400">
@@ -356,54 +457,14 @@ function DashboardContent() {
                 </div>
               </div>
             </div>
-
-            {/* Layihə Tərəqqisi */}
-            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-white">{t.projectProgress}</h2>
-                <span className="text-xs text-slate-400 font-medium">{t.totalActiveProjects}</span>
-              </div>
-
-              <div className="space-y-5">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-200 font-medium">Harbor Tower, Block A</span>
-                    <span className="text-slate-400">72%</span>
-                  </div>
-                  <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '72%' }} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-200 font-medium">Metro Logistics Hub</span>
-                    <span className="text-amber-400 text-xs">45% · {t.behindSchedule}</span>
-                  </div>
-                  <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
-                    <div className="bg-amber-500 h-full rounded-full" style={{ width: '45%' }} />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-slate-200 font-medium">Riverside Medical Centre</span>
-                    <span className="text-slate-400">88%</span>
-                  </div>
-                  <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: '88%' }} />
-                  </div>
-                </div>
-              </div>
-            </div>
           </>
         )}
 
-        {/* TAB 2: CHAT BÖLMƏSİ (CANLI SÖHBƏT VƏ QRUPLAR) */}
+        {/* TAB 2: CHAT BÖLMƏSİ (KAMERA VƏ SƏS DƏSTƏKLİ) */}
         {activeTab === 'chat' && (
           <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl backdrop-blur-md h-[calc(100vh-80px)] flex overflow-hidden shadow-2xl">
             
-            {/* SOL TƏRƏFDƏKİ SÖHBƏT VƏ QRUPLAR SİYAHISI */}
+            {/* SOL TƏRƏFDƏKİ QRUPLAR SİYAHISI */}
             <div className="w-80 border-r border-slate-800 bg-slate-950/40 flex flex-col justify-between shrink-0">
               <div>
                 <div className="p-4 border-b border-slate-800 flex justify-between items-center">
@@ -456,7 +517,6 @@ function DashboardContent() {
             {/* SAĞ TƏRƏF: AKTİV MESAJLAŞMA PƏNCƏRƏSİ */}
             <div className="flex-1 flex flex-col justify-between bg-slate-900/20">
               
-              {/* Çat Başlığı */}
               <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/30 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
@@ -485,19 +545,39 @@ function DashboardContent() {
                     return (
                       <div key={msg.id} className={`flex flex-col ${isMyMessage ? 'items-end' : 'items-start'}`}>
                         
-                        {/* MÜƏLLİF ADI VƏ VƏZİFƏSİ (İşçinin qeydiyyatdakı adı) */}
+                        {/* MÜƏLLİF ADI VƏ VƏZİFƏSİ */}
                         <div className="text-[11px] font-semibold text-amber-400/90 mb-1 px-1 flex items-center gap-1.5">
                           <span>{msg.sender}</span>
                           <span className="text-[10px] text-slate-500 font-normal">({msg.role})</span>
                         </div>
 
-                        <div className={`max-w-md rounded-2xl px-4 py-3 text-sm space-y-1 shadow-md ${
+                        <div className={`max-w-md rounded-2xl px-4 py-3 text-sm space-y-2 shadow-md ${
                           isMyMessage 
                             ? 'bg-amber-500 text-slate-950 rounded-tr-none font-medium' 
                             : 'bg-slate-800/80 border border-slate-700/60 text-slate-200 rounded-tl-none'
                         }`}>
-                          <p className="leading-relaxed">{msg.text}</p>
-                          <div className={`text-[10px] text-right ${isMyMessage ? 'text-slate-800' : 'text-slate-400'}`}>
+                          {msg.text && <p className="leading-relaxed">{msg.text}</p>}
+                          
+                          {/* Əgər şəkildirsə */}
+                          {msg.mediaType === 'image' && msg.mediaUrl && (
+                            <div className="rounded-xl overflow-hidden border border-slate-700/50">
+                              <img src={msg.mediaUrl} alt="Sahə şəkli" className="w-full max-h-60 object-cover" />
+                            </div>
+                          )}
+
+                          {/* Əgər səsli mesjadırsa */}
+                          {msg.mediaType === 'audio' && (
+                            <div className="flex items-center gap-3 bg-slate-900/40 p-2 rounded-xl">
+                              <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                                <Play className="w-4 h-4 fill-current" />
+                              </div>
+                              <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                                <div className="w-3/4 h-full bg-cyan-400" />
+                              </div>
+                            </div>
+                          )}
+
+                          <div className={`text-[10px] text-right ${isMyMessage ? 'text-slate-900' : 'text-slate-400'}`}>
                             {msg.time}
                           </div>
                         </div>
@@ -507,56 +587,71 @@ function DashboardContent() {
                 )}
               </div>
 
-              {/* AŞAĞIDAKI MESAJ GÖNDƏRMƏ PANELİ */}
-              <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
-                
-                {/* Kamera Düyməsi (Şəkil və ya Video çəkib göndərmək üçün) */}
-                <button
-                  type="button"
-                  onClick={() => alert('Kamera açıldı: Sahədən şəkil və ya video çəkilişi simulyasiyası.')}
-                  className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
-                  title="Şəkil / Video çək"
-                >
-                  <Camera className="w-5 h-5 text-amber-400" />
-                </button>
-
-                {/* Mətn daxiletmə sahəsi */}
-                <input
-                  type="text"
-                  value={messageInput}
-                  onChange={(e) => setMessageInput(e.target.value)}
-                  placeholder="Mesajınızı yazın..."
-                  className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
-                />
-
-                {/* Dinamik Düymə: Xana boşdursa Mikrofon (Səsli mesaj), Doludursa Göndər */}
-                {messageInput.trim() === '' ? (
+              {/* SƏS YAZMA REJİMİ GÖRÜNTÜSÜ VƏ YA NORMAL PANEL */}
+              {isRecording ? (
+                <div className="p-4 border-t border-slate-800 bg-red-500/10 flex items-center justify-between">
+                  <div className="flex items-center gap-3 text-red-400 text-sm font-semibold">
+                    <span className="w-3 h-3 rounded-full bg-red-500 animate-ping" />
+                    Səs yazılır... ({recordTime}s)
+                  </div>
                   <button
-                    type="button"
-                    onClick={() => alert('Səsli mesaj yazılır... (Simulyasiya)')}
-                    className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
-                    title="Səsli mesaj göndər"
-                  >
-                    <Mic className="w-5 h-5 text-cyan-400" />
-                  </button>
-                ) : (
-                  <button
-                    type="submit"
-                    className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow-lg shadow-amber-500/20 shrink-0"
+                    onClick={stopRecordingAndSend}
+                    className="flex items-center gap-2 px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400 text-white text-xs font-bold transition-all shadow-lg shadow-red-500/20"
                   >
                     <Send className="w-4 h-4" />
-                    Göndər
+                    Səsi Göndər
                   </button>
-                )}
+                </div>
+              ) : (
+                <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center gap-3">
+                  
+                  {/* Kamera düyməsi - Həqiqi Kamera Açır */}
+                  <button
+                    type="button"
+                    onClick={openCameraModal}
+                    className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
+                    title="Kameranı aç və şəkil çək"
+                  >
+                    <Camera className="w-5 h-5 text-amber-400" />
+                  </button>
 
-              </form>
+                  <input
+                    type="text"
+                    value={messageInput}
+                    onChange={(e) => setMessageInput(e.target.value)}
+                    placeholder="Mesajınızı yazın..."
+                    className="flex-1 bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                  />
+
+                  {/* Dinamik Düymə: Xana boşdursa Mikrofon (Səs yazmağı başladır), Doludursa Göndər */}
+                  {messageInput.trim() === '' ? (
+                    <button
+                      type="button"
+                      onClick={startRecording}
+                      className="p-3 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 transition-all border border-slate-700 shrink-0"
+                      title="Səsli mesaj yaz"
+                    >
+                      <Mic className="w-5 h-5 text-cyan-400" />
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      className="flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-all shadow-lg shadow-amber-500/20 shrink-0"
+                    >
+                      <Send className="w-4 h-4" />
+                      Göndər
+                    </button>
+                  )}
+
+                </form>
+              )}
 
             </div>
 
           </div>
         )}
 
-        {/* TAB 3: DPR HESABATLARI SƏHİFƏSİ */}
+        {/* TAB 3: DPR HESABATLARI */}
         {activeTab === 'dpr' && (
           <div className="space-y-6">
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -570,9 +665,7 @@ function DashboardContent() {
                   <button
                     onClick={() => setDprFilter('daily')}
                     className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      dprFilter === 'daily'
-                        ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-slate-200'
+                      dprFilter === 'daily' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {t.daily}
@@ -580,9 +673,7 @@ function DashboardContent() {
                   <button
                     onClick={() => setDprFilter('weekly')}
                     className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      dprFilter === 'weekly'
-                        ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-slate-200'
+                      dprFilter === 'weekly' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {t.weekly}
@@ -590,9 +681,7 @@ function DashboardContent() {
                   <button
                     onClick={() => setDprFilter('monthly')}
                     className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      dprFilter === 'monthly'
-                        ? 'bg-amber-500 text-slate-950 shadow-md'
-                        : 'text-slate-400 hover:text-slate-200'
+                      dprFilter === 'monthly' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-slate-400 hover:text-slate-200'
                     }`}
                   >
                     {t.monthly}
@@ -610,43 +699,36 @@ function DashboardContent() {
             </div>
 
             <div className="space-y-4">
-              {filteredReports.length === 0 ? (
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-400 text-sm">
-                  Bu kateqoriyada hələ heç bir hesabat yoxdur.
-                </div>
-              ) : (
-                filteredReports.map((report) => (
-                  <div 
-                    key={report.id}
-                    className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md relative space-y-3 hover:border-slate-700 transition-all"
-                  >
-                    <div className="absolute top-6 right-6 flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
-                      <Clock className="w-3.5 h-3.5" />
-                      <span>{report.dateTime}</span>
-                    </div>
-
-                    <div className="pr-36">
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        <Building2 className="w-4 h-4 text-amber-500" />
-                        {report.siteName}
-                      </h3>
-                      <span className="text-xs text-slate-400 block mt-0.5">
-                        {t.workersOnSite}: <strong className="text-slate-200">{report.workerCount} nəfər</strong> • Məsul şəxs: <strong className="text-amber-400/90">{report.author}</strong>
-                      </span>
-                    </div>
-
-                    <p className="text-sm text-slate-300 bg-slate-800/40 p-4 rounded-xl border border-slate-800/60 leading-relaxed">
-                      {report.workDone}
-                    </p>
+              {filteredReports.map((report) => (
+                <div 
+                  key={report.id}
+                  className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md relative space-y-3 hover:border-slate-700 transition-all"
+                >
+                  <div className="absolute top-6 right-6 flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
+                    <Clock className="w-3.5 h-3.5" />
+                    <span>{report.dateTime}</span>
                   </div>
-                ))
-              )}
-            </div>
 
+                  <div className="pr-36">
+                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-amber-500" />
+                      {report.siteName}
+                    </h3>
+                    <span className="text-xs text-slate-400 block mt-0.5">
+                      {t.workersOnSite}: <strong className="text-slate-200">{report.workerCount} nəfər</strong> • Məsul şəxs: <strong className="text-amber-400/90">{report.author}</strong>
+                    </span>
+                  </div>
+
+                  <p className="text-sm text-slate-300 bg-slate-800/40 p-4 rounded-xl border border-slate-800/60 leading-relaxed">
+                    {report.workDone}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         )}
 
-        {/* TAB 4: AYARLAR (SETTINGS) SƏHİFƏSİ */}
+        {/* TAB 4: AYARLAR */}
         {activeTab === 'settings' && (
           <div className="space-y-6 max-w-4xl">
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md">
@@ -669,28 +751,24 @@ function DashboardContent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-300 block">
-                      {t.companyName}
-                    </label>
+                    <label className="text-xs font-medium text-slate-300 block">{t.companyName}</label>
                     <input
                       type="text"
                       value={companyName}
                       onChange={(e) => setCompanyName(e.target.value)}
-                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
                       required
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label className="text-xs font-medium text-slate-300 block">
-                      Şirkət Loqosu (Şəkil Linki və ya Adı)
-                    </label>
+                    <label className="text-xs font-medium text-slate-300 block">Şirkət Loqosu</label>
                     <input
                       type="text"
                       placeholder="Məs: /logo.png"
                       value={companyLogo}
                       onChange={(e) => setCompanyLogo(e.target.value)}
-                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500 transition-colors"
+                      className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
                     />
                   </div>
                 </div>
@@ -699,7 +777,7 @@ function DashboardContent() {
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
                   <Globe className="w-4 h-4" />
-                  İnterfeys Dili / System Language
+                  İnterfeys Dili
                 </div>
 
                 <div className="flex flex-wrap gap-3">
@@ -707,9 +785,7 @@ function DashboardContent() {
                     type="button"
                     onClick={() => setLanguage('az')}
                     className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                      language === 'az'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
+                      language === 'az' ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-slate-800/60 border-slate-700 text-slate-300'
                     }`}
                   >
                     🇦🇿 Azərbaycan dili
@@ -718,9 +794,7 @@ function DashboardContent() {
                     type="button"
                     onClick={() => setLanguage('en')}
                     className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                      language === 'en'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
+                      language === 'en' ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-slate-800/60 border-slate-700 text-slate-300'
                     }`}
                   >
                     🇬🇧 English
@@ -729,9 +803,7 @@ function DashboardContent() {
                     type="button"
                     onClick={() => setLanguage('ru')}
                     className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all border ${
-                      language === 'ru'
-                        ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold'
-                        : 'bg-slate-800/60 border-slate-700 text-slate-300 hover:bg-slate-800'
+                      language === 'ru' ? 'bg-amber-500/20 border-amber-500 text-amber-400 font-bold' : 'bg-slate-800/60 border-slate-700 text-slate-300'
                     }`}
                   >
                     🇷🇺 Русский
@@ -748,39 +820,71 @@ function DashboardContent() {
                   {t.saveChanges}
                 </button>
               </div>
-
             </form>
           </div>
         )}
 
       </main>
 
-      {/* MODAL: YENİ DPR HESABATI DAXİL ETİLMƏSİ */}
+      {/* KAMERA MODALI (Canlı Canavar Çəkiliş) */}
+      {isCameraOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-xl rounded-2xl p-6 shadow-2xl relative space-y-4">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <Camera className="w-5 h-5 text-amber-500" />
+                Sahədən Şəkil Çəkilişi
+              </h3>
+              <button onClick={closeCameraModal} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="relative rounded-xl overflow-hidden bg-black aspect-video flex items-center justify-center border border-slate-800">
+              <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={closeCameraModal}
+                className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
+              >
+                İmtina et
+              </button>
+              <button
+                type="button"
+                onClick={capturePhotoAndSend}
+                className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20"
+              >
+                <Camera className="w-4 h-4" />
+                Şəkli Çək və Göndər
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: YENİ DPR */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative space-y-5 animate-in fade-in zoom-in duration-200">
-            
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative space-y-5">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <FilePlus className="w-5 h-5 text-amber-500" />
                 {t.createDpr}
               </h3>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateReport} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300 block">
-                  Hesabat Tipi
-                </label>
+                <label className="text-xs font-medium text-slate-300 block">Hesabat Tipi</label>
                 <select
                   value={newType}
-                  onChange={(e) => setNewType(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                  onChange={(e) => setNewType(e.target.value as any)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
                 >
                   <option value="daily">{t.daily}</option>
@@ -791,9 +895,7 @@ function DashboardContent() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300 block">
-                    {t.siteName}
-                  </label>
+                  <label className="text-xs font-medium text-slate-300 block">{t.siteName}</label>
                   <input
                     type="text"
                     value={newSiteName}
@@ -804,9 +906,7 @@ function DashboardContent() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-slate-300 block">
-                    {t.workerCount}
-                  </label>
+                  <label className="text-xs font-medium text-slate-300 block">{t.workerCount}</label>
                   <input
                     type="number"
                     value={newWorkerCount}
@@ -848,9 +948,7 @@ function DashboardContent() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300 block">
-                  {t.workDone}
-                </label>
+                <label className="text-xs font-medium text-slate-300 block">{t.workDone}</label>
                 <textarea
                   rows={4}
                   value={newWorkDone}
@@ -865,48 +963,42 @@ function DashboardContent() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-amber-500/20"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20"
                 >
                   {t.saveReport}
                 </button>
               </div>
-
             </form>
           </div>
         </div>
       )}
 
-      {/* MODAL: YENİ QRUP YARATMAK (CHAT) */}
+      {/* MODAL: YENİ QRUP YARATMAK */}
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-6 shadow-2xl relative space-y-5">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <h3 className="text-lg font-bold text-white flex items-center gap-2">
                 <UsersRound className="w-5 h-5 text-amber-500" />
-                Yeni Qrup və ya Kanal Yarat
+                Yeni Qrup Yarat
               </h3>
-              <button 
-                onClick={() => setIsGroupModalOpen(false)}
-                className="text-slate-400 hover:text-white transition-colors"
-              >
+              <button onClick={() => setIsGroupModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleCreateGroup} className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-medium text-slate-300 block">
-                  Qrupun Adı / Mövzusu
-                </label>
+                <label className="text-xs font-medium text-slate-300 block">Qrupun Adı</label>
                 <input
                   type="text"
-                  placeholder="Məs: Blok B Ustalar, Yanğından Mühafizə və s."
+                  placeholder="Məs: Blok B Ustalar"
                   value={newGroupName}
                   onChange={(e) => setNewGroupName(e.target.value)}
                   className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-amber-500"
@@ -918,13 +1010,13 @@ function DashboardContent() {
                 <button
                   type="button"
                   onClick={() => setIsGroupModalOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold"
                 >
                   Vazkeç
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-amber-500/20"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20"
                 >
                   Qrup Yarat
                 </button>
