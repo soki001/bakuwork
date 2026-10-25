@@ -6,13 +6,19 @@ type Language = 'az' | 'en' | 'ru';
 
 type Translations = {
   [key in Language]: {
+    // Sol Menyu (Sidebar)
     dashboard: string;
     newDpr: string;
     punchList: string;
     export: string;
+    settings: string;
+    
+    // Hero Banner
     systemTag: string;
     heroTitle: string;
     heroDesc: string;
+
+    // KPI Kartları
     activeSites: string;
     workersOnSite: string;
     weather: string;
@@ -21,9 +27,20 @@ type Translations = {
     weatherStatusRu: string;
     pendingDprs: string;
     hseIncidents: string;
+
+    // Layihə Tərəqqisi
     projectProgress: string;
     totalActiveProjects: string;
     behindSchedule: string;
+
+    // Ayarlar Səhifəsi
+    settingsTitle: string;
+    settingsDesc: string;
+    companyInfo: string;
+    companyName: string;
+    selectLanguage: string;
+    saveChanges: string;
+    saveSuccess: string;
   };
 };
 
@@ -33,6 +50,7 @@ export const translations: Translations = {
     newDpr: "Yeni DPR Hesabatı",
     punchList: "Qüsurlar Siyahısı",
     export: "İxrac et",
+    settings: "Ayarlar",
     systemTag: "Tikinti İdarəetmə Sistemi",
     heroTitle: "Sahələrinizdə son vəziyyət və gündəlik hesabatlar",
     heroDesc: "Bütün aktiv obyekt, işçi sayını və təhlükəsizlik statusunu real vaxt rejimində izləyin.",
@@ -47,12 +65,20 @@ export const translations: Translations = {
     projectProgress: "Layihə Tərəqqisi",
     totalActiveProjects: "Ümumi 3 Aktiv Obyekt",
     behindSchedule: "plandan geridə",
+    settingsTitle: "Sistem və Şirkət Ayarları",
+    settingsDesc: "Şirkət məlumatlarınızı, panel parametrlərini və sistem dilini buradan idarə edin.",
+    companyInfo: "Şirkət Profil Məlumatları",
+    companyName: "Şirkətin Adı",
+    selectLanguage: "Sistem Dili",
+    saveChanges: "Dəyişiklikləri Yadda Saxla",
+    saveSuccess: "Ayarlar uğurla yadda saxlanıldı!",
   },
   en: {
     dashboard: "Dashboard",
     newDpr: "New DPR Report",
     punchList: "Punch List",
     export: "Export",
+    settings: "Settings",
     systemTag: "Construction Management System",
     heroTitle: "Site status and daily progress reports",
     heroDesc: "Track all active sites, worker counts, and safety status in real-time.",
@@ -67,12 +93,20 @@ export const translations: Translations = {
     projectProgress: "Project Progress",
     totalActiveProjects: "Total 3 Active Sites",
     behindSchedule: "behind schedule",
+    settingsTitle: "System & Company Settings",
+    settingsDesc: "Manage your company details, dashboard options, and system language here.",
+    companyInfo: "Company Profile Info",
+    companyName: "Company Name",
+    selectLanguage: "System Language",
+    saveChanges: "Save Changes",
+    saveSuccess: "Settings saved successfully!",
   },
   ru: {
     dashboard: "Панель управления",
     newDpr: "Новый отчет DPR",
     punchList: "Дефектная ведомость",
     export: "Экспорт",
+    settings: "Настройки",
     systemTag: "Система Управления Строительством",
     heroTitle: "Текущий статус объектов и ежедневные отчеты",
     heroDesc: "Отслеживайте все активные объекты, количество рабочих и статус безопасности в реальном времени.",
@@ -87,6 +121,13 @@ export const translations: Translations = {
     projectProgress: "Прогресс проектов",
     totalActiveProjects: "Всего 3 активных объекта",
     behindSchedule: "отставание от графика",
+    settingsTitle: "Настройки Системы и Компании",
+    settingsDesc: "Управляйте данными компании, параметрами панели и языком системы отсюда.",
+    companyInfo: "Профиль Компании",
+    companyName: "Название Компании",
+    selectLanguage: "Язык Системы",
+    saveChanges: "Сохранить изменения",
+    saveSuccess: "Настройки успешно сохранены!",
   }
 };
 
