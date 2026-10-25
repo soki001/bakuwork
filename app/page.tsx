@@ -7,7 +7,6 @@ import {
   CloudSun, 
   FileText, 
   ShieldAlert, 
-  Plus, 
   LayoutDashboard,
   FilePlus,
   ClipboardCheck,
@@ -16,22 +15,86 @@ import {
   HardHat,
   Save,
   Globe,
-  Image as ImageIcon
+  Plus,
+  Clock,
+  Calendar,
+  X
 } from 'lucide-react';
 import { LanguageProvider, useLanguage } from '../context/LanguageContext';
 
+interface DprReport {
+  id: string;
+  siteName: string;
+  type: 'daily' | 'weekly' | 'monthly';
+  workerCount: number;
+  workDone: string;
+  dateTime: string;
+  author: string;
+}
+
 function DashboardContent() {
   const { language, setLanguage, t } = useLanguage();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'dpr' | 'settings'>('dashboard');
   
-  // Şirkət və Ayarlar State-ləri (Tamamilə ayrı)
+  // DPR Filter State
+  const [dprFilter, setDprFilter] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Şirkət və Ayarlar State-ləri
   const [companyName, setCompanyName] = useState('BuildSync MMC');
   const [companyLogo, setCompanyLogo] = useState('');
   const [saveAlert, setSaveAlert] = useState(false);
 
+  // Yeni DPR Form State-ləri
+  const [newSiteName, setNewSiteName] = useState('Harbor Tower, Block A');
+  const [newWorkerCount, setNewWorkerCount] = useState<number>(45);
+  const [newWorkDone, setNewWorkDone] = useState('');
+  const [newDateTime, setNewDateTime] = useState('2026-10-25T14:30');
+  const [newType, setNewType] = useState<'daily' | 'weekly' | 'monthly'>('daily');
+
+  // Nümunə DPR Hesabatları Bazası (Local State)
+  const [reports, setReports] = useState<DprReport[]>([
+    {
+      id: '1',
+      siteName: 'Harbor Tower, Block A',
+      type: 'daily',
+      workerCount: 48,
+      workDone: '14-cü mərtəbədə beton tökmə işləri tamamlandı. Armatur karkaslarının montajı davam edir.',
+      dateTime: '2026-10-25 17:45',
+      author: 'Əli Məmmədov (Böyük Mühəndis)'
+    },
+    {
+      id: '2',
+      siteName: 'Metro Logistics Hub',
+      type: 'daily',
+      workerCount: 32,
+      workDone: 'Bünövrə izolyasiyası işləri aparıldı. Su xətlərinin çəkilişi davam etdirilir.',
+      dateTime: '2026-10-25 16:20',
+      author: 'Rəşad Quliyev (Sahə Rəisi)'
+    },
+    {
+      id: '3',
+      siteName: 'Riverside Medical Centre',
+      type: 'weekly',
+      workerCount: 85,
+      workDone: 'Həftəlik yekun: Bütün MEP (HVAC və santexnika) borulama işlərinin 60%-i tamamlandı.',
+      dateTime: '2026-10-24 18:00',
+      author: 'Kərim Əhmədov (MEP Koordinatoru)'
+    },
+    {
+      id: '4',
+      siteName: 'Harbor Tower, Block A',
+      type: 'monthly',
+      workerCount: 120,
+      workDone: 'Aylıq yekun: 3 Mərtəbə monolit karkas qaldırıldı. Təhlükəsizlik auditindən uğurla keçildi.',
+      dateTime: '2026-10-01 10:00',
+      author: 'BuildSync MMC Auditi'
+    }
+  ]);
+
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: t.dashboard },
-    { id: 'newDpr', icon: FilePlus, label: t.newDpr },
+    { id: 'dpr', icon: FilePlus, label: t.dprReports },
     { id: 'punchList', icon: ClipboardCheck, label: t.punchList },
     { id: 'export', icon: Download, label: t.export },
     { id: 'settings', icon: Settings, label: t.settings },
@@ -43,13 +106,32 @@ function DashboardContent() {
     setTimeout(() => setSaveAlert(false), 3000);
   };
 
+  const handleCreateReport = (e: React.FormEvent) => {
+    e.preventDefault();
+    const formattedDate = newDateTime.replace('T', ' ');
+    const newReport: DprReport = {
+      id: Date.now().toString(),
+      siteName: newSiteName,
+      type: newType,
+      workerCount: Number(newWorkerCount),
+      workDone: newWorkDone,
+      dateTime: formattedDate,
+      author: 'Sahə Mühəndisi'
+    };
+    setReports([newReport, ...reports]);
+    setIsModalOpen(false);
+    setNewWorkDone('');
+  };
+
+  const filteredReports = reports.filter(r => r.type === dprFilter);
+
   return (
     <div className="min-h-screen bg-[#0b0f19] text-white relative overflow-hidden flex">
       
       {/* SABİT ARXA FON ŞƏKLİ */}
       <div className="fixed inset-0 opacity-25 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center z-0" />
 
-      {/* TƏK VƏ MÜKƏMMƏL SOL MENYU (SIDEBAR) */}
+      {/* SOL MENYU (SIDEBAR) */}
       <aside className="w-64 bg-slate-900/90 border-r border-slate-800 min-h-screen p-4 flex flex-col justify-between backdrop-blur-md relative z-20 shrink-0">
         <div>
           <div className="flex items-center gap-3 px-3 py-4 mb-6">
@@ -71,10 +153,10 @@ function DashboardContent() {
                 <button
                   key={item.id}
                   onClick={() => {
-                    if (item.id === 'dashboard' || item.id === 'settings') {
-                      setActiveTab(item.id as 'dashboard' | 'settings');
+                    if (item.id === 'dashboard' || item.id === 'dpr' || item.id === 'settings') {
+                      setActiveTab(item.id as 'dashboard' | 'dpr' | 'settings');
                     } else {
-                      alert(`${item.label} bölməsi tezliklə aktiv olacaq!`);
+                      alert(`${item.label} bölməsi tezliklə yüklənəcək!`);
                     }
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
@@ -102,30 +184,20 @@ function DashboardContent() {
         {/* TAB 1: DASHBOARD (ƏSAS PANEL) */}
         {activeTab === 'dashboard' && (
           <>
-            {/* Hero Banner */}
             <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
               <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none bg-[url('/kask11.webp')] bg-cover bg-center" />
 
-              <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="space-y-2">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium">
-                    <Building2 className="w-3.5 h-3.5" />
-                    {t.systemTag} • {companyName}
-                  </div>
-                  <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
-                    {t.heroTitle}
-                  </h1>
-                  <p className="text-slate-300 text-sm max-w-xl">
-                    {t.heroDesc}
-                  </p>
+              <div className="relative z-10 flex flex-col justify-center space-y-2 pr-12">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-medium w-fit">
+                  <Building2 className="w-3.5 h-3.5" />
+                  {t.systemTag} • {companyName}
                 </div>
-
-                <div>
-                  <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-sm transition-all shadow-lg shadow-amber-500/20">
-                    <Plus className="w-4 h-4" />
-                    {t.newDpr}
-                  </button>
-                </div>
+                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white">
+                  {t.heroTitle}
+                </h1>
+                <p className="text-slate-300 text-sm max-w-xl">
+                  {t.heroDesc}
+                </p>
               </div>
             </div>
 
@@ -168,7 +240,7 @@ function DashboardContent() {
                   <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold text-white">4</div>
+                  <div className="text-2xl font-bold text-white">{reports.length}</div>
                   <div className="text-xs text-slate-400 font-medium">{t.pendingDprs}</div>
                 </div>
               </div>
@@ -226,7 +298,103 @@ function DashboardContent() {
           </>
         )}
 
-        {/* TAB 2: AYARLAR (SETTINGS) SƏHİFƏSİ - MÜSTƏQİL BLOKLAR */}
+        {/* TAB 2: DPR HESABATLARI SƏHİFƏSİ */}
+        {activeTab === 'dpr' && (
+          <div className="space-y-6">
+            
+            {/* ÜST PANEL: BAŞLIQ, FILTERLƏR VƏ ƏLAVƏ ET DÜYMƏSİ */}
+            <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-bold text-white">{t.dprTitle}</h1>
+                <p className="text-slate-400 text-sm mt-1">{t.dprDesc}</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                {/* 3 Filter Düyməsi: Günlük, Həftəlik, Aylıq */}
+                <div className="flex bg-slate-800/80 p-1 rounded-xl border border-slate-700">
+                  <button
+                    onClick={() => setDprFilter('daily')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      dprFilter === 'daily'
+                        ? 'bg-amber-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {t.daily}
+                  </button>
+                  <button
+                    onClick={() => setDprFilter('weekly')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      dprFilter === 'weekly'
+                        ? 'bg-amber-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {t.weekly}
+                  </button>
+                  <button
+                    onClick={() => setDprFilter('monthly')}
+                    className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      dprFilter === 'monthly'
+                        ? 'bg-amber-500 text-slate-950 shadow-md'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    {t.monthly}
+                  </button>
+                </div>
+
+                {/* Yeni DPR Yarat Düyməsi */}
+                <button
+                  onClick={() => setIsModalOpen(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-all shadow-lg shadow-amber-500/20"
+                >
+                  <Plus className="w-4 h-4" />
+                  {t.createDpr}
+                </button>
+              </div>
+            </div>
+
+            {/* HESABATLAR SİYAHISI */}
+            <div className="space-y-4">
+              {filteredReports.length === 0 ? (
+                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-400 text-sm">
+                  Bu kateqoriyada hələ heç bir hesabat yoxdur. "+ Yeni DPR Hesabatı" düyməsinə basaraq ilk hesabatı əlavə edin.
+                </div>
+              ) : (
+                filteredReports.map((report) => (
+                  <div 
+                    key={report.id}
+                    className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md relative space-y-3 hover:border-slate-700 transition-all"
+                  >
+                    {/* SAĞ YUXARI KÜNC: SAAT VƏ TARİX */}
+                    <div className="absolute top-6 right-6 flex items-center gap-1.5 text-xs font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-1.5 rounded-xl">
+                      <Clock className="w-3.5 h-3.5" />
+                      <span>{report.dateTime}</span>
+                    </div>
+
+                    <div className="pr-36">
+                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                        <Building2 className="w-4 h-4 text-amber-500" />
+                        {report.siteName}
+                      </h3>
+                      <span className="text-xs text-slate-400 block mt-0.5">
+                        {t.workersOnSite}: <strong className="text-slate-200">{report.workerCount} nəfər</strong> • Məsul: {report.author}
+                      </span>
+                    </div>
+
+                    <p className="text-sm text-slate-300 bg-slate-800/40 p-4 rounded-xl border border-slate-800/60 leading-relaxed">
+                      {report.workDone}
+                    </p>
+                  </div>
+                ))
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB 3: AYARLAR (SETTINGS) SƏHİFƏSİ */}
         {activeTab === 'settings' && (
           <div className="space-y-6 max-w-4xl">
             <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md">
@@ -242,7 +410,7 @@ function DashboardContent() {
 
             <form onSubmit={handleSaveSettings} className="space-y-6">
               
-              {/* BLOK 1: ŞİRKƏT PROFİLİ VƏ LOGO (Tamamilə Ayrı) */}
+              {/* BLOK 1: ŞİRKƏT PROFİLİ VƏ LOGO */}
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
                   <Building2 className="w-4 h-4" />
@@ -278,7 +446,7 @@ function DashboardContent() {
                 </div>
               </div>
 
-              {/* BLOK 2: SİSTEM DİLİ SEÇİMİ (Tamamilə Müstəqil) */}
+              {/* BLOK 2: SİSTEM DİLİ SEÇİMİ */}
               <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 backdrop-blur-md space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-slate-800 text-amber-400 font-semibold text-sm">
                   <Globe className="w-4 h-4" />
@@ -338,6 +506,123 @@ function DashboardContent() {
         )}
 
       </main>
+
+      {/* MODAL: YENİ DPR HESABATI DAXİL ETİLMƏSİ (TAARİX VƏ SAAT SEÇİMİ İLƏ) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl p-6 shadow-2xl relative space-y-5 animate-in fade-in zoom-in duration-200">
+            
+            <div className="flex justify-between items-center border-b border-slate-800 pb-3">
+              <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                <FilePlus className="w-5 h-5 text-amber-500" />
+                {t.createDpr}
+              </h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateReport} className="space-y-4">
+              
+              {/* Hesabat Tipi */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300 block">
+                  Hesabat Tipi
+                </label>
+                <select
+                  value={newType}
+                  onChange={(e) => setNewType(e.target.value as 'daily' | 'weekly' | 'monthly')}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                >
+                  <option value="daily">{t.daily}</option>
+                  <option value="weekly">{t.weekly}</option>
+                  <option value="monthly">{t.monthly}</option>
+                </select>
+              </div>
+
+              {/* Obyekt Adı Və İşçi Sayı */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300 block">
+                    {t.siteName}
+                  </label>
+                  <input
+                    type="text"
+                    value={newSiteName}
+                    onChange={(e) => setNewSiteName(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-xs font-medium text-slate-300 block">
+                    {t.workerCount}
+                  </label>
+                  <input
+                    type="number"
+                    value={newWorkerCount}
+                    onChange={(e) => setNewWorkerCount(Number(e.target.value))}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* TARİX VƏ SAAT SEÇİMİ PANELİ */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                  {t.selectDateTime}
+                </label>
+                <input
+                  type="datetime-local"
+                  value={newDateTime}
+                  onChange={(e) => setNewDateTime(e.target.value)}
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              {/* Görülən işlər */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-slate-300 block">
+                  {t.workDone}
+                </label>
+                <textarea
+                  rows={4}
+                  value={newWorkDone}
+                  onChange={(e) => setNewWorkDone(e.target.value)}
+                  placeholder="Sahədə bu gün hansı işlər görülüb, hansı materiallar istifadə olunub..."
+                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-white text-sm focus:outline-none focus:border-amber-500"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition-all"
+                >
+                  {t.cancel}
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition-all shadow-lg shadow-amber-500/20"
+                >
+                  {t.saveReport}
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
