@@ -6,9 +6,9 @@ type Language = 'az' | 'en' | 'ru';
 
 type Translations = {
   [key in Language]: {
-    // Sol Menyu (Sidebar)
+    // Sol Menyu
     dashboard: string;
-    newDpr: string;
+    dprReports: string;
     punchList: string;
     export: string;
     settings: string;
@@ -41,13 +41,27 @@ type Translations = {
     selectLanguage: string;
     saveChanges: string;
     saveSuccess: string;
+
+    // DPR Hesabatları
+    dprTitle: string;
+    dprDesc: string;
+    daily: string;
+    weekly: string;
+    monthly: string;
+    createDpr: string;
+    selectDateTime: string;
+    siteName: string;
+    workerCount: string;
+    workDone: string;
+    cancel: string;
+    saveReport: string;
   };
 };
 
 export const translations: Translations = {
   az: {
     dashboard: "Panel",
-    newDpr: "Yeni DPR Hesabatı",
+    dprReports: "DPR Hesabatları",
     punchList: "Qüsurlar Siyahısı",
     export: "İxrac et",
     settings: "Ayarlar",
@@ -72,10 +86,22 @@ export const translations: Translations = {
     selectLanguage: "Sistem Dili",
     saveChanges: "Dəyişiklikləri Yadda Saxla",
     saveSuccess: "Ayarlar uğurla yadda saxlanıldı!",
+    dprTitle: "DPR Hesabatları İdarəetməsi",
+    dprDesc: "Gündəlik, həftəlik və aylıq sahə hesabatlarını izləyin və yenilərini əlavə edin.",
+    daily: "Günlük",
+    weekly: "Həftəlik",
+    monthly: "Aylıq",
+    createDpr: "Yeni DPR Hesabatı",
+    selectDateTime: "Tarix və Saat Seçimi",
+    siteName: "Obyekt / Sahə Adı",
+    workerCount: "İşçi Sayı",
+    workDone: "Görülən İşlərin Təsviri",
+    cancel: "Ləğv et",
+    saveReport: "Hesabatı Əlavə Et"
   },
   en: {
     dashboard: "Dashboard",
-    newDpr: "New DPR Report",
+    dprReports: "DPR Reports",
     punchList: "Punch List",
     export: "Export",
     settings: "Settings",
@@ -100,10 +126,22 @@ export const translations: Translations = {
     selectLanguage: "System Language",
     saveChanges: "Save Changes",
     saveSuccess: "Settings saved successfully!",
+    dprTitle: "DPR Reports Management",
+    dprDesc: "Monitor daily, weekly, and monthly site reports and create new entries.",
+    daily: "Daily",
+    weekly: "Weekly",
+    monthly: "Monthly",
+    createDpr: "New DPR Report",
+    selectDateTime: "Date & Time Selection",
+    siteName: "Site / Project Name",
+    workerCount: "Worker Count",
+    workDone: "Work Executed Description",
+    cancel: "Cancel",
+    saveReport: "Save Report"
   },
   ru: {
     dashboard: "Панель управления",
-    newDpr: "Новый отчет DPR",
+    dprReports: "Отчеты DPR",
     punchList: "Дефектная ведомость",
     export: "Экспорт",
     settings: "Настройки",
@@ -128,6 +166,18 @@ export const translations: Translations = {
     selectLanguage: "Язык Системы",
     saveChanges: "Сохранить изменения",
     saveSuccess: "Настройки успешно сохранены!",
+    dprTitle: "Управление отчетами DPR",
+    dprDesc: "Просматривайте ежедневные, еженедельные и ежемесячные отчеты и добавляйте новые.",
+    daily: "Ежедневный",
+    weekly: "Еженедельный",
+    monthly: "Ежемесячный",
+    createDpr: "Новый отчет DPR",
+    selectDateTime: "Выбор даты и времени",
+    siteName: "Название объекта",
+    workerCount: "Количество рабочих",
+    workDone: "Описание выполненных работ",
+    cancel: "Отмена",
+    saveReport: "Сохранить отчет"
   }
 };
 
