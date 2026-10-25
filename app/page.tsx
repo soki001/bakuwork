@@ -23,7 +23,7 @@ export default function Dashboard() {
         
         {/* Hero Banner */}
         <div className="relative overflow-hidden rounded-2xl bg-slate-900/60 border border-slate-800/80 p-8 shadow-2xl backdrop-blur-md">
-          <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-[url('/insaat.11.jfif')] bg-cover bg-center" />
+          <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 pointer-events-none bg-[url('/kask11.webp')] bg-cover bg-center" />
           
           <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-2">
